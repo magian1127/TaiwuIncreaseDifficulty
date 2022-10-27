@@ -16,14 +16,33 @@ namespace IncreaseDifficultyBackend
     public class IncreaseDifficulty : TaiwuRemakeHarmonyPlugin
     {
         /// <summary>
-        /// 降低亲密度的倍数
-        /// </summary>
-        public static int favorabilityDivisor = 10;
-
-        /// <summary>
         /// 降低历练的倍数
         /// </summary>
-        public static int expDivisor = 10;
+        public static int ExpDivisor { get; private set; }
 
+        /// <summary>
+        /// 降低亲密度的倍数
+        /// </summary>
+        public static int FavorabilityDivisor { get; private set; }
+
+        /// <summary>
+        /// 更换武器
+        /// </summary>
+        public static bool ChangeWeapony { get; private set; }
+
+        public override void OnModSettingUpdate()
+        {
+            int val = 10;
+
+            DomainManager.Mod.GetSetting(base.ModIdStr, "ExpDivisor", ref val);
+            ExpDivisor = Math.Clamp(val, 2, 10);
+            
+            DomainManager.Mod.GetSetting(base.ModIdStr, "FavorabilityDivisor", ref val);
+            FavorabilityDivisor = Math.Clamp(val, 2, 10);
+
+            bool bval=true;
+            DomainManager.Mod.GetSetting(base.ModIdStr, "ChangeWeapony", ref bval);
+            ChangeWeapony = bval;
+        }
     }
 }

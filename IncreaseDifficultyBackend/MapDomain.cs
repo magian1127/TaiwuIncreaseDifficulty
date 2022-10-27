@@ -54,9 +54,11 @@ namespace IncreaseDifficultyBackend
                     combatSkill = list[skilllCount == 1 ? 0 : random.Next(0, skilllCount - 1)];
                 }
 
+                int exp;
                 if (blockConfig.TemplateId == 124)
                 {//暗渊
-                    taiwuChar.ChangeExp(context, 1000);
+                    exp = 1000;
+                    taiwuChar.ChangeExp(context, exp - (exp / 10 * IncreaseDifficulty.ExpDivisor));
                     if (canSet)
                     {
                         var practiceLevel = Math.Min((int)combatSkill.GetPracticeLevel() + random.Next(1, 3), 100);
@@ -70,7 +72,8 @@ namespace IncreaseDifficultyBackend
                         case 0:
                             break;
                         case 1:
-                            taiwuChar.ChangeExp(context, 1);
+                            exp = 1;
+                            taiwuChar.ChangeExp(context, exp);
                             if (canSet && random.CheckPercentProb(25))
                             {
                                 var practiceLevel = Math.Min((int)combatSkill.GetPracticeLevel() + random.Next(0, 1), 100);
@@ -78,7 +81,8 @@ namespace IncreaseDifficultyBackend
                             }
                             break;
                         case 2:
-                            taiwuChar.ChangeExp(context, 10);
+                            exp = 10;
+                            taiwuChar.ChangeExp(context, exp - (exp / 10 * IncreaseDifficulty.ExpDivisor));
                             if (canSet && random.CheckPercentProb(50))
                             {
                                 var practiceLevel = Math.Min((int)combatSkill.GetPracticeLevel() + random.Next(0, 2), 100);
@@ -86,7 +90,8 @@ namespace IncreaseDifficultyBackend
                             }
                             break;
                         case 3:
-                            taiwuChar.ChangeExp(context, 100);
+                            exp = 100;
+                            taiwuChar.ChangeExp(context, exp - (exp / 10 * IncreaseDifficulty.ExpDivisor));
                             if (canSet && random.CheckPercentProb(75))
                             {
                                 var practiceLevel = Math.Min((int)combatSkill.GetPracticeLevel() + random.Next(1, 2), 100);

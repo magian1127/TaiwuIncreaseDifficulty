@@ -19,7 +19,7 @@ namespace IncreaseDifficultyBackend
             bool isTaiwu = relatedChar.GetId() == DomainManager.Taiwu.GetTaiwuCharId();
             if (isTaiwu && baseDelta > 0)
             {
-                baseDelta /= IncreaseDifficulty.favorabilityDivisor;
+                baseDelta /= IncreaseDifficulty.FavorabilityDivisor;
             }
         }
     }

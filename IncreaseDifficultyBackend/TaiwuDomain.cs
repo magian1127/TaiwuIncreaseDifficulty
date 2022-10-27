@@ -25,7 +25,7 @@ namespace IncreaseDifficultyBackend
             if (can)
             {
                 short original = Config.SkillGradeData.Instance[book.GetGrade()].ReadingExpGainPerPage;//原来获取到的exp
-                int exp = original / IncreaseDifficulty.expDivisor;
+                int exp = original / IncreaseDifficulty.ExpDivisor;
                 int amend = (-original) + exp;//先减这个方法里设置过的exp,然后再加上修改过后的exp
                 __instance.GetTaiwu().ChangeExp(context, amend);
             }
@@ -45,7 +45,7 @@ namespace IncreaseDifficultyBackend
         public static void Prefix(TaiwuDomain __instance, DataContext context, SkillBook book, byte internalIndex)
         {
             int bookoriginal = Config.SkillGradeData.Instance[book.GetGrade()].ReadingExpGainPerPage;
-            int bookexp = bookoriginal / IncreaseDifficulty.expDivisor;
+            int bookexp = bookoriginal / IncreaseDifficulty.ExpDivisor;
             int bookamend = (-bookoriginal) + bookexp;
             __instance.GetTaiwu().ChangeExp(context, bookamend);
 
@@ -56,7 +56,7 @@ namespace IncreaseDifficultyBackend
             if (can)
             {
                 short original = Config.SkillGradeData.Instance[book.GetGrade()].ReadingExpGainPerPage;//原来获取到的exp
-                int exp = original / IncreaseDifficulty.expDivisor;
+                int exp = original / IncreaseDifficulty.ExpDivisor;
                 int amend = (-original) + exp;//先减这个方法里设置过的exp,然后再加上修改过后的exp
                 __instance.GetTaiwu().ChangeExp(context, amend);
             }
@@ -81,7 +81,7 @@ namespace IncreaseDifficultyBackend
             if (readingPage == 5)
             {
                 int original = Config.SkillGradeData.Instance[book.GetGrade()].ReadingExpGainPerPage / 10;//原来获取到的exp
-                int exp = original / IncreaseDifficulty.expDivisor;
+                int exp = original / IncreaseDifficulty.ExpDivisor;
                 int amend = (-original) + exp;//先减这个方法里设置过的exp,然后再加上修改过后的exp
                 __instance.GetTaiwu().ChangeExp(context, amend);
             }
@@ -107,7 +107,7 @@ namespace IncreaseDifficultyBackend
             if (readingPage == 6)
             {
                 int original = Config.SkillGradeData.Instance[book.GetGrade()].ReadingExpGainPerPage / 10;//原来获取到的exp
-                int exp = original / IncreaseDifficulty.expDivisor;
+                int exp = original / IncreaseDifficulty.ExpDivisor;
                 int amend = (-original) + exp;//先减这个方法里设置过的exp,然后再加上修改过后的exp
                 //AdaptableLog.Info("成功修改功法书" + amend);
                 __instance.GetTaiwu().ChangeExp(context, amend);

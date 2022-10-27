@@ -21,58 +21,66 @@ namespace IncreaseDifficultyBackend
         /// <param name="context"></param>
         public static bool Prefix(CombatDomain __instance, byte state, bool isAlly)
         {
-            CombatCharacter enemyChar = __instance.GetCombatCharacter(false);
-            if (!__instance.InAttackRange(enemyChar))
+            if (!IncreaseDifficulty.ChangeWeapony)
             {
-                int usingIndex = enemyChar.GetUsingWeaponIndex();
-                if (usingIndex < 0)
+                return true;
+            }
+
+            CombatCharacter enemyChar = __instance.GetCombatCharacter(false);
+
+            if (__instance.InAttackRange(enemyChar))
+            {
+                return true;
+            }
+
+            int usingIndex = enemyChar.GetUsingWeaponIndex();
+            if (usingIndex < 0)
+            {
+                return true;
+            }
+
+            short targetDistance = __instance.GetCurrentDistance();
+
+            var weapons = enemyChar.GetWeapons();
+
+            int weaponIndex = weapons[usingIndex].Id;
+
+            if (weaponIndex < 0)
+            {
+                return true;
+            }
+
+            Weapon weapon = DomainManager.Item.GetElement_Weapons(weaponIndex);
+
+            if (!(weapon.GetMinDistance() <= targetDistance && targetDistance <= weapon.GetMaxDistance()))
+            {
+                var dataContext = enemyChar.GetDataContext();
+
+                for (int i = 0; i < weapons.Length - 3; i++)
                 {
-                    return true;
-                }
-
-                short targetDistance = __instance.GetCurrentDistance();
-
-                var weapons = enemyChar.GetWeapons();
-
-                int weaponIndex = weapons[usingIndex].Id;
-
-                if (weaponIndex < 0)
-                {
-                    return true;
-                }
-
-                Weapon weapon = DomainManager.Item.GetElement_Weapons(weaponIndex);
-
-                if (!(weapon.GetMinDistance() <= targetDistance && targetDistance <= weapon.GetMaxDistance()))
-                {
-                    for (int i = 0; i < weapons.Length - 3; i++)
+                    if (usingIndex == i)
                     {
-                        if (usingIndex == i)
-                        {
-                            continue;
-                        }
-                        int id = weapons[i].Id;
-                        if (id < 0)
-                        {
-                            continue;
-                        }
-
-                        weapon = DomainManager.Item.GetElement_Weapons(id);
-                        CombatWeaponData weaponData = __instance.GetWeaponData(false, weapons[i]);
-                        bool canAtt = (weapon.GetMinDistance() <= targetDistance && targetDistance <= weapon.GetMaxDistance())
-                            && weaponData.GetCdFrame() == 0 && weaponData.GetExtraCdFrame() == 0;
-                        if (canAtt)
-                        {
-                            var dataContext = enemyChar.GetDataContext();
-                            __instance.ChangeWeapon(enemyChar, i, dataContext, false, false);
-                            //var uWeapon = __instance.GetWeaponData(false, weapons[usingIndex]);
-                            //AdaptableLog.Info($"武器{weapon.GetName()} 索引{i} 距离{targetDistance} 武器{weapon.GetMinDistance()}-{weapon.GetMaxDistance()} CD{uWeapon.GetCdFrame()}-{uWeapon.GetExtraCdFrame()}");
-                            return true;
-                        }
-
+                        continue;
                     }
-                }
+                    int id = weapons[i].Id;
+                    if (id < 0)
+                    {
+                        continue;
+                    }
 
+                    weapon = DomainManager.Item.GetElement_Weapons(id);
+                    CombatWeaponData weaponData = __instance.GetWeaponData(false, weapons[i]);
+                    bool canAtt = (weapon.GetMinDistance() <= targetDistance && targetDistance <= weapon.GetMaxDistance())
+                        && weaponData.GetCdFrame() == 0 && weaponData.GetExtraCdFrame() == 0;
+                    if (canAtt)
+                    {
+                        __instance.ChangeWeapon(enemyChar, i, dataContext, false, false);
+                        //var uWeapon = __instance.GetWeaponData(false, weapons[usingIndex]);
+                        //AdaptableLog.Info($"武器{weapon.GetName()} 索引{i} 距离{targetDistance} 武器{weapon.GetMinDistance()}-{weapon.GetMaxDistance()} CD{uWeapon.GetCdFrame()}-{uWeapon.GetExtraCdFrame()}");
+                        return true;
+                    }
+
+                }
             }
 
             return true;
@@ -92,8 +100,13 @@ namespace IncreaseDifficultyBackend
         /// <param name="init"></param>
         /// <param name="force"></param>
         /// <returns></returns>
-        public static bool Prefix(CombatDomain __instance, CombatCharacter character, int weaponIndex, DataContext context, bool init, bool force)
+        public static bool Prefix(CombatDomain __instance, ref CombatCharacter character, int weaponIndex, DataContext context, bool init, bool force)
         {
+            if (!IncreaseDifficulty.ChangeWeapony)
+            {
+                return true;
+            }
+
             if (character.GetId() == DomainManager.Taiwu.GetTaiwuCharId())
             {
                 return true;
@@ -116,6 +129,7 @@ namespace IncreaseDifficultyBackend
                 character.SetChangeTrickAttack(false, context);
 
                 __instance.UpdateAllCommandAvailability(character, context);
+
                 character.SetAnimationToLoop(__instance.GetProperLoopAni(character, false), context);
                 //AdaptableLog.Info($"想乱换的武器{weapon.GetName()} 索引{uWeaponsIndex} 距离{targetDistance} 武器{weapon.GetMinDistance()}-{weapon.GetMaxDistance()}");
                 return false;
