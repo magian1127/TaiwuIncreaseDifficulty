@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IncreaseDifficultyBackend", "IncreaseDifficultyBackend\IncreaseDifficultyBackend.csproj", "{87E75CE5-6365-4E81-8F7B-836314B20D05}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{87E75CE5-6365-4E81-8F7B-836314B20D05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87E75CE5-6365-4E81-8F7B-836314B20D05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87E75CE5-6365-4E81-8F7B-836314B20D05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87E75CE5-6365-4E81-8F7B-836314B20D05}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {67DDCFA9-15D6-4F4D-B1DB-C8A1296DDF4C}
+	EndGlobalSection
+EndGlobal
