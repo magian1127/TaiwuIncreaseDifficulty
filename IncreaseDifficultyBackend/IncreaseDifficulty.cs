@@ -12,7 +12,7 @@ using TaiwuModdingLib.Core.Plugin;
 
 namespace IncreaseDifficultyBackend
 {
-    [PluginConfig("吾觉太易", "Magian", "v0.0.3")]
+    [PluginConfig("吾觉太易", "Magian", "v0.0.5")]
     public class IncreaseDifficulty : TaiwuRemakeHarmonyPlugin
     {
         /// <summary>
@@ -30,6 +30,12 @@ namespace IncreaseDifficultyBackend
         /// </summary>
         public static bool ChangeWeapony { get; private set; }
 
+        /// <summary>
+        /// 一起放护体
+        /// </summary>
+        public static bool TogetherDefendSkill { get; private set; }
+        
+
         public override void OnModSettingUpdate()
         {
             int val = 10;
@@ -40,9 +46,14 @@ namespace IncreaseDifficultyBackend
             DomainManager.Mod.GetSetting(base.ModIdStr, "FavorabilityDivisor", ref val);
             FavorabilityDivisor = Math.Clamp(val, 2, 10);
 
+
             bool bval=true;
+
             DomainManager.Mod.GetSetting(base.ModIdStr, "ChangeWeapony", ref bval);
             ChangeWeapony = bval;
+
+            DomainManager.Mod.GetSetting(base.ModIdStr, "TogetherDefendSkill", ref bval);
+            TogetherDefendSkill = bval;
         }
     }
 }
