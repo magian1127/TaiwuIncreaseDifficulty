@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Combat;
+using GameData.Domains.CombatSkill;
 using GameData.Domains.Item;
 using GameData.Utilities;
 using HarmonyLib;
@@ -69,6 +70,12 @@ namespace IncreaseDifficultyBackend
                     }
 
                     weapon = DomainManager.Item.GetElement_Weapons(id);
+
+                    if (weapon.GetCurrDurability() <= 0)
+                    {
+                        continue;
+                    }
+
                     CombatWeaponData weaponData = __instance.GetWeaponData(false, weapons[i]);
                     bool canAtt = (weapon.GetMinDistance() <= targetDistance && targetDistance <= weapon.GetMaxDistance())
                         && weaponData.GetCdFrame() == 0 && weaponData.GetExtraCdFrame() == 0;
@@ -113,7 +120,7 @@ namespace IncreaseDifficultyBackend
             }
 
             int uWeaponsIndex = character.GetUsingWeaponIndex();
-            if (uWeaponsIndex == -1)
+            if (uWeaponsIndex == -1 || uWeaponsIndex >= 3)
             {
                 return true;
             }
@@ -121,6 +128,11 @@ namespace IncreaseDifficultyBackend
             short targetDistance = __instance.GetCurrentDistance();
             var weapons = character.GetWeapons();
             Weapon weapon = DomainManager.Item.GetElement_Weapons(weapons[uWeaponsIndex].Id);
+
+            if (weapon.GetCurrDurability() <= 0)
+            {
+                return true;
+            }
 
             if (weapon.GetMinDistance() <= targetDistance && targetDistance <= weapon.GetMaxDistance())
             {
@@ -130,7 +142,7 @@ namespace IncreaseDifficultyBackend
 
                 __instance.UpdateAllCommandAvailability(character, context);
 
-                character.SetAnimationToLoop(__instance.GetProperLoopAni(character, false), context);
+                //character.SetAnimationToLoop(__instance.GetProperLoopAni(character, false), context);
                 //AdaptableLog.Info($"想乱换的武器{weapon.GetName()} 索引{uWeaponsIndex} 距离{targetDistance} 武器{weapon.GetMinDistance()}-{weapon.GetMaxDistance()}");
                 return false;
             }
@@ -138,6 +150,61 @@ namespace IncreaseDifficultyBackend
             {
                 return true;
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.ApplyAgileOrDefenseSkill))]
+    public class CombatDomain_ApplyAgileOrDefenseSkill
+    {
+        public static void Postfix(CombatDomain __instance, CombatCharacter character, Config.CombatSkillItem skillConfig)
+        {
+            if (!IncreaseDifficulty.TogetherDefendSkill)
+            {
+                return;
+            }
+
+            bool isTaiwu = character.GetId() == DomainManager.Taiwu.GetTaiwuCharId();
+            if (!isTaiwu || skillConfig.EquipType != 3)
+            {//不是太吾,或者技能不是护体
+                return;
+            }
+
+            CombatCharacter enemyChar = __instance.GetCombatCharacter(false);
+            if (enemyChar.GetAffectingDefendSkillId() >= 0 || enemyChar.GetPreparingSkillId() >= 0)
+            {//没有护体在运行,或者没有在释放技能
+                return;
+            }
+
+            var enemySkillId = enemyChar.GetDefenceSkillList();
+            if (enemySkillId.Length <= 0)
+            {//没有护体
+                return;
+            }
+
+            List<short> canUseSkills = new List<short>();
+            foreach (var sId in enemySkillId)
+            {
+                Config.CombatSkillItem config = Config.CombatSkill.Instance.GetItem(sId);
+                if (config == null)
+                {
+                    continue;
+                }
+
+                if (__instance.GetElement_EnemySkillDataDict(new CombatSkillKey(enemyChar.GetId(), config.TemplateId)).GetCanUse())
+                {
+                    canUseSkills.Add(config.TemplateId);
+                }
+            }
+
+            if (canUseSkills.Count == 0)
+            {
+                return;
+            }
+
+            Random random = new Random();
+            __instance.GetAiInfo(enemyChar).IsDefenseRequiredPositively = false;
+            __instance.StartPrepareSkill(__instance.Context, canUseSkills.Count == 1 ? canUseSkills[0] : canUseSkills[random.Next(0, canUseSkills.Count - 1)], false);
+
         }
     }
 
