@@ -10,8 +10,8 @@ using HarmonyLib;
 
 namespace IncreaseDifficultyBackend
 {
-    [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.SetMoveState))]
-    public class CombatDomain_SetMoveState
+    [HarmonyPatch]
+    public class CombatDomainPatch
     {
         /// <summary>
         /// 更改距离时,立马判断是否需要更换武器
@@ -20,7 +20,9 @@ namespace IncreaseDifficultyBackend
         /// <param name="character"></param>
         /// <param name="index"></param>
         /// <param name="context"></param>
-        public static bool Prefix(CombatDomain __instance, byte state, bool isAlly)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.SetMoveState))]
+        public static bool SetMoveStatePrefix(CombatDomain __instance, byte state, bool isAlly)
         {
             if (!IncreaseDifficulty.ChangeWeapony)
             {
@@ -92,11 +94,7 @@ namespace IncreaseDifficultyBackend
 
             return true;
         }
-    }
 
-    [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.ChangeWeapon), new Type[] { typeof(CombatCharacter), typeof(int), typeof(DataContext), typeof(bool), typeof(bool) })]
-    public class CombatDomain_ChangeWeapon
-    {
         /// <summary>
         /// 阻止乱换武器
         /// </summary>
@@ -107,7 +105,9 @@ namespace IncreaseDifficultyBackend
         /// <param name="init"></param>
         /// <param name="force"></param>
         /// <returns></returns>
-        public static bool Prefix(CombatDomain __instance, ref CombatCharacter character, int weaponIndex, DataContext context, bool init, bool force)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.ChangeWeapon), new Type[] { typeof(CombatCharacter), typeof(int), typeof(DataContext), typeof(bool), typeof(bool) })]
+        public static bool ChangeWeaponPrefix(CombatDomain __instance, ref CombatCharacter character, int weaponIndex, DataContext context, bool init, bool force)
         {
             if (!IncreaseDifficulty.ChangeWeapony)
             {
@@ -151,12 +151,10 @@ namespace IncreaseDifficultyBackend
                 return true;
             }
         }
-    }
 
-    [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.ApplyAgileOrDefenseSkill))]
-    public class CombatDomain_ApplyAgileOrDefenseSkill
-    {
-        public static void Postfix(CombatDomain __instance, CombatCharacter character, Config.CombatSkillItem skillConfig)
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.ApplyAgileOrDefenseSkill))]
+        public static void ApplyAgileOrDefenseSkillPostfix(CombatDomain __instance, CombatCharacter character, Config.CombatSkillItem skillConfig)
         {
             if (!IncreaseDifficulty.TogetherDefendSkill)
             {
@@ -207,5 +205,6 @@ namespace IncreaseDifficultyBackend
 
         }
     }
+
 
 }

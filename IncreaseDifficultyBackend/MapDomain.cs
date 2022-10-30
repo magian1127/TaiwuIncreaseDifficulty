@@ -11,10 +11,12 @@ using GameData.Utilities;
 
 namespace IncreaseDifficultyBackend
 {
-    [HarmonyPatch(typeof(MapDomain), "Move", new Type[] { typeof(DataContext), typeof(short) })]
-    public class MapDomain_Move_Patch
+    [HarmonyPatch]
+    public class MapDomainPatch
     {
-        public static void Postfix(MapDomain __instance, DataContext context, short destBlockId)
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(MapDomain), "Move", new Type[] { typeof(DataContext), typeof(short) })]
+        public static void MovePostfix(MapDomain __instance, DataContext context, short destBlockId)
         {
             Character taiwuChar = DomainManager.Taiwu.GetTaiwu();
             Location srcLocation = taiwuChar.GetLocation();
