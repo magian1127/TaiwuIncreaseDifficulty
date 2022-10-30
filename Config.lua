@@ -13,7 +13,7 @@ return {
 4 敌人一起放护体
 - 只要太吾施展了护体,敌人就会尝试施展随机护体.
 5 移动增加历练和随机一个轻功修习度
-- 历练是1 10 100 1000. 修习是25%0-1 50%0-2 75%1-2 100%1-3 (暗渊练轻功很合理)
+- 历练是1 1-10 10-100 100-1000. 修习是25%1-1 50%1-2 75%1-3 100%1-5 (暗渊练轻功很合理)
 6 更保密的不传之秘
 - 看不到电脑的保密功法
 7 哄骗偷窃抢夺,根据聪颖显示数量
@@ -41,6 +41,12 @@ return {
 	BackendPlugins = 
 	{
 		[1] = [[IncreaseDifficultyBackend.dll]]
+	},
+	TagList =
+	{
+		[1] = "Modifications",
+		[2] = "Extensions",
+		[3] = "Optimizations"
 	},
 	DefaultSettings = {
 		[1] = {
@@ -72,10 +78,17 @@ return {
             Description = "降低亲密度的倍数,原来数值除以该数,2=原来的一半",
             Key = "FavorabilityDivisor",
 			SettingType = "Slider",
-            DefaultValue = 10,
+            DefaultValue = 2,
 			MinValue = 2,
 			MaxValue = 10,
 			StepSize = 1
-        }
+        },
+		[5] = {
+            DisplayName = "移动修练提醒",
+            Description = "成功增加轻功修习度时会有通知,目前无法自动定义通知,所以是显示学会了新的",
+			Key = "MoveNotification",
+			SettingType = "Toggle",
+			DefaultValue = false
+        },
 	}
 }

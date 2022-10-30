@@ -37,6 +37,10 @@ namespace IncreaseDifficultyBackend
         /// </summary>
         public static bool TogetherDefendSkill { get; private set; }
 
+        /// <summary>
+        /// 移动修练提醒
+        /// </summary>
+        public static bool MoveNotification { get; private set; }
 
         public override void OnModSettingUpdate()
         {
@@ -56,6 +60,9 @@ namespace IncreaseDifficultyBackend
 
             DomainManager.Mod.GetSetting(base.ModIdStr, "TogetherDefendSkill", ref bval);
             TogetherDefendSkill = bval;
+
+            DomainManager.Mod.GetSetting(base.ModIdStr, "MoveNotification", ref bval);
+            MoveNotification = bval;
         }
 
         public static class EventGuid
