@@ -7,8 +7,8 @@ using HarmonyLib;
 
 namespace IncreaseDifficultyBackend
 {
-    [HarmonyPatch(typeof(TaiwuDomain), "SetLifeSkillPageComplete")]
-    public class TaiwuDomain_SetLifeSkillPageComplete
+    [HarmonyPatch]
+    public class TaiwuDomainPatch
     {
         /// <summary>
         /// 修改每读完一页技艺书获取的历练
@@ -17,7 +17,9 @@ namespace IncreaseDifficultyBackend
         /// <param name="context"></param>
         /// <param name="book"></param>
         /// <param name="readingPage"></param>
-        public static void Prefix(TaiwuDomain __instance, DataContext context, SkillBook book, byte readingPage)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "SetLifeSkillPageComplete")]
+        public static void SetLifeSkillPageCompletePrefix(TaiwuDomain __instance, DataContext context, SkillBook book, byte readingPage)
         {
             ReadingBookStrategies strategies;
             bool getV = Traverse.Create(__instance).Method("TryGetElement_ReadingBooks", new object[] { book.GetItemKey(), strategies }).GetValue<bool>();
@@ -30,11 +32,7 @@ namespace IncreaseDifficultyBackend
                 __instance.GetTaiwu().ChangeExp(context, amend);
             }
         }
-    }
 
-    [HarmonyPatch(typeof(TaiwuDomain), "SetCombatSkillPageComplete")]
-    public class TaiwuDomain_SetCombatSkillPageComplete
-    {
         /// <summary>
         /// 修改每读完一页功法书获取的历练
         /// </summary>
@@ -42,7 +40,9 @@ namespace IncreaseDifficultyBackend
         /// <param name="context"></param>
         /// <param name="book"></param>
         /// <param name="readingPage"></param>
-        public static void Prefix(TaiwuDomain __instance, DataContext context, SkillBook book, byte internalIndex)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "SetCombatSkillPageComplete")]
+        public static void SetCombatSkillPageCompletePrefix(TaiwuDomain __instance, DataContext context, SkillBook book, byte internalIndex)
         {
             int bookoriginal = Config.SkillGradeData.Instance[book.GetGrade()].ReadingExpGainPerPage;
             int bookexp = bookoriginal / IncreaseDifficulty.ExpDivisor;
@@ -61,11 +61,7 @@ namespace IncreaseDifficultyBackend
                 __instance.GetTaiwu().ChangeExp(context, amend);
             }
         }
-    }
 
-    [HarmonyPatch(typeof(TaiwuDomain), "UpdateLifeSkillBookReadingProgress")]
-    public class TaiwuDomain_UpdateLifeSkillBookReadingProgress
-    {
         /// <summary>
         /// 修改一次性读完技艺书获取的历练
         /// </summary>
@@ -73,7 +69,9 @@ namespace IncreaseDifficultyBackend
         /// <param name="book"></param>
         /// <param name="strategies"></param>
         /// <param name="isInBattle"></param>
-        public static void Prefix(TaiwuDomain __instance, DataContext context, SkillBook book, ReadingBookStrategies strategies, bool isInBattle)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "UpdateLifeSkillBookReadingProgress")]
+        public static void UpdateLifeSkillBookReadingProgressPrefix(TaiwuDomain __instance, DataContext context, SkillBook book, ReadingBookStrategies strategies, bool isInBattle)
         {
             short skillTemplateId = book.GetLifeSkillTemplateId();
             TaiwuLifeSkill lifeSkill = Traverse.Create(__instance).Method("GetTaiwuLifeSkill(", new object[] { skillTemplateId }).GetValue<TaiwuLifeSkill>();
@@ -86,11 +84,7 @@ namespace IncreaseDifficultyBackend
                 __instance.GetTaiwu().ChangeExp(context, amend);
             }
         }
-    }
 
-    [HarmonyPatch(typeof(TaiwuDomain), "UpdateCombatSkillBookReadingProgress")]
-    public class TaiwuDomain_UpdateCombatSkillBookReadingProgress
-    {
         /// <summary>
         /// 修改一次性读完功法书获取的历练
         /// </summary>
@@ -98,7 +92,9 @@ namespace IncreaseDifficultyBackend
         /// <param name="book"></param>
         /// <param name="strategies"></param>
         /// <param name="isInBattle"></param>
-        public static void Prefix(TaiwuDomain __instance, DataContext context, SkillBook book, ReadingBookStrategies strategies, bool isInBattle)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "UpdateCombatSkillBookReadingProgress")]
+        public static void UpdateCombatSkillBookReadingProgressPrefix(TaiwuDomain __instance, DataContext context, SkillBook book, ReadingBookStrategies strategies, bool isInBattle)
         {
             short skillTemplateId = book.GetCombatSkillTemplateId();
             Config.CombatSkillItem skillConfig = Config.CombatSkill.Instance[skillTemplateId];

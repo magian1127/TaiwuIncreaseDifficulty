@@ -12,9 +12,11 @@ using TaiwuModdingLib.Core.Plugin;
 
 namespace IncreaseDifficultyBackend
 {
-    [PluginConfig("吾觉太易", "Magian", "v0.0.5")]
+    [PluginConfig("吾觉太易-后端", "Magian", "v0.0.6")]
     public class IncreaseDifficulty : TaiwuRemakeHarmonyPlugin
     {
+        public const string Version = "";
+
         /// <summary>
         /// 降低历练的倍数
         /// </summary>
@@ -34,7 +36,7 @@ namespace IncreaseDifficultyBackend
         /// 一起放护体
         /// </summary>
         public static bool TogetherDefendSkill { get; private set; }
-        
+
 
         public override void OnModSettingUpdate()
         {
@@ -42,18 +44,37 @@ namespace IncreaseDifficultyBackend
 
             DomainManager.Mod.GetSetting(base.ModIdStr, "ExpDivisor", ref val);
             ExpDivisor = Math.Clamp(val, 2, 10);
-            
+
             DomainManager.Mod.GetSetting(base.ModIdStr, "FavorabilityDivisor", ref val);
             FavorabilityDivisor = Math.Clamp(val, 2, 10);
 
 
-            bool bval=true;
+            bool bval = true;
 
             DomainManager.Mod.GetSetting(base.ModIdStr, "ChangeWeapony", ref bval);
             ChangeWeapony = bval;
 
             DomainManager.Mod.GetSetting(base.ModIdStr, "TogetherDefendSkill", ref bval);
             TogetherDefendSkill = bval;
+        }
+
+        public static class EventGuid
+        {
+            /// <summary>
+            /// 偷窃
+            /// </summary>
+            public const string Steal = "1fdd9d65-a207-4e4a-9f1c-99512cf96fd9";
+
+            /// <summary>
+            /// 哄骗
+            /// </summary>
+            public const string Cheat = "586e9c28-7d1a-4945-b3c5-0394bdd7665c";
+
+            /// <summary>
+            /// 抢夺
+            /// </summary>
+            public const string Rob = "f370a0e3-3ebc-4e52-93bd-9fd75a1d3b78";
+
         }
     }
 }
