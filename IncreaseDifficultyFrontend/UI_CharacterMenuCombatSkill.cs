@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace IncreaseDifficultyFrontend
 {
-    [HarmonyPatch]
+    //[HarmonyPatch]
     public class UI_CharacterMenuCombatSkillPatch
     {
         [HarmonyPrefix]
@@ -36,17 +36,15 @@ namespace IncreaseDifficultyFrontend
         public static void OnRenderSectSkill(CombatSkillDisplayData skillData, CombatSkillView skillView)
         {
             var orgTemplateId = SingletonObject.getInstance<CharacterMonitorModel>().GetMonitorItem<BasicInfoMonitor>(skillData.CharId, 0, false).NameRelatedData.OrgTemplateId;
+            var CombatSkillItem = Config.CombatSkill.Instance[skillData.TemplateId];
+            var sectId = CombatSkillItem.SectId;
 
-            var sectId = Config.CombatSkill.Instance[skillData.TemplateId].SectId;
-
-            if (orgTemplateId == sectId)
+            if (orgTemplateId == sectId && CombatSkillItem.IsNonPublic)
             {
                 skillView.CGet<TextMeshProUGUI>("Name").text = "未知功法";
                 MouseTipDisplayer mouseTips = skillView.GetComponent<MouseTipDisplayer>();
                 mouseTips.enabled = false;
             }
-
-
         }
     }
 }

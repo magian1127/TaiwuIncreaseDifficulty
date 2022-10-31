@@ -39,29 +39,27 @@ namespace IncreaseDifficultyBackend
                     Character character = DomainManager.Character.GetElement_Objects(charId);
                     var orgTemplateId = character.GetOrganizationInfo().OrgTemplateId;
 
-                    if (!DomainManager.TaiwuEvent.IsTriggeredEvent(IncreaseDifficulty.EventGuid.Cheat))
-                    {//除了哄骗之外的
-                        data.CanSelectItemList.RemoveAll(delegate (ItemDisplayData item)
-                        {//删除所有不传之秘
-                            if (item.Key.ItemType == 10)
+                    data.CanSelectItemList.RemoveAll(delegate (ItemDisplayData item)
+                    {//删除所有不传之秘
+                        if (item.Key.ItemType == 10)
+                        {
+                            var skillBook = Config.SkillBook.Instance[item.Key.TemplateId];
+                            if (skillBook.CombatSkillTemplateId >= 0)
                             {
-                                var skillBook = Config.SkillBook.Instance[item.Key.TemplateId];
-                                if (skillBook.CombatSkillTemplateId > 0)
+                                var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
+                                if (combatSkill.SectId == orgTemplateId && combatSkill.IsNonPublic)
                                 {
-                                    var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
-                                    if (combatSkill.SectId == orgTemplateId)
-                                    {
-                                        return true;
-                                    }
+                                    return true;
                                 }
                             }
-                            return false;
-                        });
-                    }
+                        }
+                        return false;
+                    });
 
                     var clever = EventHelper.GetRolePersonality(taiwu, PersonalityType.Clever);
                     //太吾每5聪颖,可以多看到一个物品
-                    if (data.CanSelectItemList.Count <= 3 + clever / 5)
+                    int seeItem = 3 + clever / 5;
+                    if (data.CanSelectItemList.Count <= seeItem)
                     {
                         return;
                     }
@@ -75,7 +73,7 @@ namespace IncreaseDifficultyBackend
                     Random random = new Random(seed);
                     List<ItemDisplayData> newSelectItemList = new List<ItemDisplayData>();
 
-                    for (int i = 0; i < 3 + clever / 5; i++)
+                    for (int i = 0; i < seeItem; i++)
                     {
                         var item = data.CanSelectItemList[data.CanSelectItemList.Count == 1 ? 0 : random.Next(0, data.CanSelectItemList.Count - 1 - i)];
                         newSelectItemList.Add(item);
