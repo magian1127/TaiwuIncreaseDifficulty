@@ -16,6 +16,28 @@ namespace IncreaseDifficultyBackend
     public class EventHelperPatch
     {
         [HarmonyPrefix]
+        [HarmonyPatch(typeof(EventHelper), nameof(EventHelper.ChangeFavorability))]
+        public static void ChangeFavorabilityPrefix(Character characterA, Character characterB, ref short changeValue, sbyte personalityType, sbyte requiredPersonality)
+        {
+            bool isTaiwu = characterB.GetId() == DomainManager.Taiwu.GetTaiwuCharId();
+            if (!isTaiwu || changeValue <= 600)
+            {
+                return;
+            }
+
+            TaiwuEvent taiwuEvent = Traverse.Create(DomainManager.TaiwuEvent).Field("_showingEvent").GetValue<TaiwuEvent>();
+            if (taiwuEvent.EventGuid == IncreaseDifficulty.EventGuid.Gift)
+            {
+                changeValue -= (short)(characterA.GetInteractionGrade() * 600);
+                if (changeValue < 600)
+                {
+                    changeValue = 600;
+                }
+                //AdaptableLog.Info($"降低太吾送礼{taiwuEvent.EventGuid} - {changeValue} - {characterA.GetInteractionGrade()}");
+            }
+        }
+
+        [HarmonyPrefix]
         [HarmonyPatch(typeof(EventHelper), nameof(EventHelper.SelectCharacterItemRequest))]
         public static void SelectCharacterItemRequestPrefix(int charId, EventArgBox argBox, SelectItemFilter filter, Action onSelectFinish, ref bool includeEquipment, bool skipAddItem)
         {

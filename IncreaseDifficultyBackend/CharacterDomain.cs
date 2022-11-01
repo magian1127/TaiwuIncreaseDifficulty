@@ -5,7 +5,7 @@ using HarmonyLib;
 
 namespace IncreaseDifficultyBackend
 {
-    [HarmonyPatch]
+    //[HarmonyPatch]
     public class CharacterDomainPatch
     {
         /// <summary>
