@@ -23,11 +23,6 @@ namespace IncreaseDifficultyBackend
         public static int ExpDivisor { get; private set; }
 
         /// <summary>
-        /// 降低亲密度的倍数
-        /// </summary>
-        public static int FavorabilityDivisor { get; private set; }
-
-        /// <summary>
         /// 更换武器
         /// </summary>
         public static bool ChangeWeapony { get; private set; }
@@ -48,10 +43,6 @@ namespace IncreaseDifficultyBackend
 
             DomainManager.Mod.GetSetting(base.ModIdStr, "ExpDivisor", ref val);
             ExpDivisor = Math.Clamp(val, 2, 10);
-
-            DomainManager.Mod.GetSetting(base.ModIdStr, "FavorabilityDivisor", ref val);
-            FavorabilityDivisor = Math.Clamp(val, 2, 10);
-
 
             bool bval = true;
 
@@ -82,6 +73,10 @@ namespace IncreaseDifficultyBackend
             /// </summary>
             public const string Rob = "f370a0e3-3ebc-4e52-93bd-9fd75a1d3b78";
 
+            /// <summary>
+            /// 送礼
+            /// </summary>
+            public const string Gift = "5699d2a7-30c6-456e-9fe2-695b674e9e46";
         }
     }
 }
