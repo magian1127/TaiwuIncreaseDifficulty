@@ -80,7 +80,7 @@ namespace IncreaseDifficultyBackend
 
                     var clever = EventHelper.GetRolePersonality(taiwu, PersonalityType.Clever);
                     //太吾每5聪颖,可以多看到一个物品
-                    int seeItem = 3 + clever / 5;
+                    int seeItem = 5 + clever / 5;
                     if (data.CanSelectItemList.Count <= seeItem)
                     {
                         return;
