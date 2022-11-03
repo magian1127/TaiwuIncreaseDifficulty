@@ -1,5 +1,6 @@
 ﻿using System;
 using GameData.Common;
+using GameData.Domains;
 using GameData.Domains.Item;
 using GameData.Domains.Taiwu;
 using GameData.Utilities;
@@ -109,6 +110,68 @@ namespace IncreaseDifficultyBackend
                 __instance.GetTaiwu().ChangeExp(context, amend);
             }
         }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), nameof(TaiwuDomain.SelectSkillBreakGrid))]
+        public static void SelectSkillBreakGridPrefix(TaiwuDomain __instance, ref DataContext context, short skillId, byte col, byte row)
+        {
+            SkillBreakPlate plate = __instance.GetElement_SkillBreakPlateDict(skillId);
+            string costedStep = plate.CostedStepCount.ToString("00");
+            costedStep = costedStep.Substring(costedStep.Length - 2);
+
+            string exp = DomainManager.Taiwu.GetTaiwu().GetExp().ToString("000");
+            exp = exp.Substring(exp.Length - 3);
+
+            string colS = col.ToString("00");
+            colS = colS.Substring(colS.Length - 2);
+
+            string rowS = row.ToString("00");
+            rowS = rowS.Substring(rowS.Length - 2);
+
+            string seeds = DomainManager.World.GetCurrDate().ToString() + costedStep + exp + colS + rowS;
+            //AdaptableLog.Info($"点击突破格子{seeds}");
+            ulong seed;
+            ulong.TryParse(seeds, out seed);
+
+            if (seed == 0)
+            {
+                return;
+            }
+            context.Random.Reinitialise(seed);
+        }
+
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "InitSkillBreakPlate")]
+        public static void InitSkillBreakPlatePrefix(ref DataContext context, short skillId, SkillBreakPlate plate)
+        {//使用 技能ID+日期+历练后三位 固定随机的种子 防止重复读取记录
+            int currDate = DomainManager.World.GetCurrDate();
+
+            string date = currDate.ToString("0000");
+            date = date.Substring(date.Length - 4);
+
+            string exp = DomainManager.Taiwu.GetTaiwu().GetExp().ToString("000");
+            exp = exp.Substring(exp.Length - 3);
+
+            string seeds = skillId + date + exp;
+            //AdaptableLog.Info($"生成突破格子{seeds}");
+            ulong seed;
+            ulong.TryParse(seeds, out seed);
+
+            var taiwuCombatSkill = Traverse.Create(DomainManager.Taiwu).Method("GetTaiwuCombatSkill", new object[] { skillId }).GetValue<TaiwuCombatSkill>();
+            if (taiwuCombatSkill.LastClearBreakPlateTime == currDate)
+            {//当月点过重修,所以改一下种子
+                seed += 1;
+            }
+
+            if (seed <= 1)
+            {
+                return;
+            }
+            context.Random.Reinitialise(seed);
+        }
+
+
     }
 
 }

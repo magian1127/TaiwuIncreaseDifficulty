@@ -16,12 +16,18 @@ namespace IncreaseDifficultyBackend
     [HarmonyPatch]
     public class OrganizationDomainPatch
     {
+        /// <summary>
+        /// 离开当前组织(门派)
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="character"></param>
+        /// <param name="charIsDead"></param>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(OrganizationDomain), nameof(OrganizationDomain.LeaveOrganization))]
         public static void LeaveOrganizationPrefix(DataContext context, ref Character character, bool charIsDead)
         {
             OrganizationInfo orgInfo = character.GetOrganizationInfo();
-            if (orgInfo.SettlementId < 0)
+            if (orgInfo.SettlementId < 0 || charIsDead)
             {
                 return;
             }
@@ -46,7 +52,7 @@ namespace IncreaseDifficultyBackend
 
             if (removeBooks.Count > 0)
             {//离开门派时,没收所有保密书籍
-                AdaptableLog.Info($"被没收了{removeBooks.Count}本书籍");
+                //AdaptableLog.Info($"被没收了{removeBooks.Count}本书籍");
                 character.RemoveInventoryItemList(context, removeBooks, true, false);
             }
         }

@@ -7,6 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IncreaseDifficultyBackend",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IncreaseDifficultyFrontend", "IncreaseDifficultyFrontend\IncreaseDifficultyFrontend.csproj", "{4CE0B7AD-6C70-4981-8ADF-B37C67FA163B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{065E918D-9133-4C87-91EA-6EB3677C7F10}"
+	ProjectSection(SolutionItems) = preProject
+		Config.lua = Config.lua
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
