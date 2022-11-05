@@ -36,7 +36,7 @@ return {
 	Author = [[Magian]],
 	FileId = 2880390461,
 	Source = 1,
-	Title = [[吾觉太易v0.0.8]],
+	Title = [[吾觉太易v0.0.9]],
 	FrontendPlugins = 
 	{
 		[1] = [[IncreaseDifficultyFrontend.dll]]
@@ -83,5 +83,15 @@ return {
 			SettingType = "Toggle",
 			DefaultValue = false
         },
+		[5] = {
+            DisplayName = "骗偷抢显示数",
+            Description = "哄骗偷窃抢夺最少可以看到的物品数量",
+			Key = "CheatStealRobNum",
+			SettingType = "Slider",
+            DefaultValue = 3,
+			MinValue = 1,
+			MaxValue = 5,
+			StepSize = 1
+        }
 	}
 }

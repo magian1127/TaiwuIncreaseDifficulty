@@ -12,9 +12,8 @@ namespace IncreaseDifficultyBackend
     public class TaiwuDomainPatch
     {
         /// <summary>
-        /// 修改每读完一页技艺书获取的历练
+        /// 设置技艺书每页进度,修改每读完一页获取的历练
         /// </summary>
-        /// <param name="__instance"></param>
         /// <param name="context"></param>
         /// <param name="book"></param>
         /// <param name="readingPage"></param>
@@ -35,9 +34,8 @@ namespace IncreaseDifficultyBackend
         }
 
         /// <summary>
-        /// 修改每读完一页功法书获取的历练
+        /// 设置功法书每页进度,修改每读完一页获取的历练
         /// </summary>
-        /// <param name="__instance"></param>
         /// <param name="context"></param>
         /// <param name="book"></param>
         /// <param name="readingPage"></param>
@@ -64,7 +62,7 @@ namespace IncreaseDifficultyBackend
         }
 
         /// <summary>
-        /// 修改一次性读完技艺书获取的历练
+        /// 更新读取技艺书的进度,修改一次性读完书获取的历练
         /// </summary>
         /// <param name="context"></param>
         /// <param name="book"></param>
@@ -87,7 +85,7 @@ namespace IncreaseDifficultyBackend
         }
 
         /// <summary>
-        /// 修改一次性读完功法书获取的历练
+        /// 更新读取功法书的进度,修改一次性读完书获取的历练
         /// </summary>
         /// <param name="context"></param>
         /// <param name="book"></param>
@@ -111,6 +109,13 @@ namespace IncreaseDifficultyBackend
             }
         }
 
+        /// <summary>
+        /// 点击突破格子,修改随机种子为固定
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="skillId"></param>
+        /// <param name="col"></param>
+        /// <param name="row"></param>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(TaiwuDomain), nameof(TaiwuDomain.SelectSkillBreakGrid))]
         public static void SelectSkillBreakGridPrefix(TaiwuDomain __instance, ref DataContext context, short skillId, byte col, byte row)
@@ -140,7 +145,12 @@ namespace IncreaseDifficultyBackend
             context.Random.Reinitialise(seed);
         }
 
-
+        /// <summary>
+        /// 初始化突破格子,修改随机种子为固定
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="skillId"></param>
+        /// <param name="plate"></param>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(TaiwuDomain), "InitSkillBreakPlate")]
         public static void InitSkillBreakPlatePrefix(ref DataContext context, short skillId, SkillBreakPlate plate)

@@ -17,6 +17,13 @@ namespace IncreaseDifficultyBackend
     [HarmonyPatch]
     public class MerchantDomainPatch
     {
+        /// <summary>
+        /// 显示交换的书籍,修改为不能换的书不显示
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="npcId"></param>
+        /// <param name="isFavor"></param>
+        /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MerchantDomain), nameof(MerchantDomain.GetTradeBookDisplayData))]
         public static bool GetTradeBookDisplayDataPrefix(MerchantDomain __instance, ref List<ItemDisplayData> __result, DataContext context, int npcId, bool isFavor)
@@ -27,15 +34,20 @@ namespace IncreaseDifficultyBackend
             List<ItemKey> itemKeys = new List<ItemKey>();
 
             var orgTemplateId = character.GetOrganizationInfo().OrgTemplateId;
-            var orgCombatSkillsDisplayData = DomainManager.Organization.GetOrganizationCombatSkillsDisplayData(orgTemplateId);
-            sbyte visibleLevel = (sbyte)Math.Max(orgCombatSkillsDisplayData.ApprovingRate / 100 - 2, 0);
+            //AdaptableLog.Info($"门派ID {orgTemplateId}");
+            sbyte visibleLevel = 10;
+            if (0 < orgTemplateId && orgTemplateId < 16)
+            {
+                var orgCombatSkillsDisplayData = DomainManager.Organization.GetOrganizationCombatSkillsDisplayData(orgTemplateId);
+                visibleLevel = (sbyte)Math.Max(orgCombatSkillsDisplayData.ApprovingRate / 100 - 2, 0);
+            }
             var taiwu = DomainManager.Taiwu.GetTaiwu();
             var consummateLevel = taiwu.GetConsummateLevel();
             var learnedCombatSkills = DomainManager.Taiwu.GetTaiwu().GetLearnedCombatSkills();
 
             if (isFavor)
             {
-                itemKeys.AddRange(merchantData.GoodsList0.Items.Keys.ToList());
+                itemKeys.AddRange(merchantData.GoodsList0.Items.Keys.ToList().FindAll(IsNonPublicBook(orgTemplateId, isFavor, consummateLevel, visibleLevel, learnedCombatSkills)));
                 itemKeys.AddRange(merchantData.GoodsList1.Items.Keys.ToList().FindAll(IsNonPublicBook(orgTemplateId, isFavor, consummateLevel, visibleLevel, learnedCombatSkills)));
             }
             else
@@ -62,14 +74,14 @@ namespace IncreaseDifficultyBackend
                             return true;
                         }
                         var skillBook = Config.SkillBook.Instance[item.TemplateId];
-
+                        //AdaptableLog.Info($"{skillBook.Name} {consummateLevel} - {(skillBook.Grade - 1) * 2}");
                         if (consummateLevel < (skillBook.Grade - 1) * 2)
                         {//精纯不够
                             return false;
                         }
 
                         if (skillBook.CombatSkillTemplateId >= 0)
-                        {//不是技能书
+                        {//是技能书
                             var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
                             if (combatSkill.SectId == orgTemplateId && !combatSkill.IsNonPublic)
                             {//技能门派等于当前人物门派,并且技能不是不传之秘
