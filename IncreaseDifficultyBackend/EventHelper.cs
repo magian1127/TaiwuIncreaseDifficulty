@@ -15,6 +15,14 @@ namespace IncreaseDifficultyBackend
     [HarmonyPatch]
     public class EventHelperPatch
     {
+        /// <summary>
+        /// 更改亲密度,送礼减少人物级别*600的亲密度
+        /// </summary>
+        /// <param name="characterA"></param>
+        /// <param name="characterB"></param>
+        /// <param name="changeValue"></param>
+        /// <param name="personalityType"></param>
+        /// <param name="requiredPersonality"></param>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(EventHelper), nameof(EventHelper.ChangeFavorability))]
         public static void ChangeFavorabilityPrefix(Character characterA, Character characterB, ref short changeValue, sbyte personalityType, sbyte requiredPersonality)
@@ -80,7 +88,7 @@ namespace IncreaseDifficultyBackend
 
                     var clever = EventHelper.GetRolePersonality(taiwu, PersonalityType.Clever);
                     //太吾每5聪颖,可以多看到一个物品
-                    int seeItem = 5 + clever / 5;
+                    int seeItem = IncreaseDifficulty.CheatStealRobNum + clever / 5;
                     if (data.CanSelectItemList.Count <= seeItem)
                     {
                         return;
@@ -97,7 +105,7 @@ namespace IncreaseDifficultyBackend
 
                     for (int i = 0; i < seeItem; i++)
                     {
-                        var item = data.CanSelectItemList[data.CanSelectItemList.Count == 1 ? 0 : random.Next(0, data.CanSelectItemList.Count - 1 - i)];
+                        var item = data.CanSelectItemList[data.CanSelectItemList.Count == 1 ? 0 : random.Next(0, data.CanSelectItemList.Count - 1)];
                         newSelectItemList.Add(item);
                         data.CanSelectItemList.Remove(item);
                     }

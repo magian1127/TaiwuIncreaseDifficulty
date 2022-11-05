@@ -17,7 +17,7 @@ namespace IncreaseDifficultyBackend
     public class OrganizationDomainPatch
     {
         /// <summary>
-        /// 离开当前组织(门派)
+        /// 离开当前组织(门派),删除不传之秘书籍
         /// </summary>
         /// <param name="context"></param>
         /// <param name="character"></param>

@@ -12,7 +12,7 @@ using TaiwuModdingLib.Core.Plugin;
 
 namespace IncreaseDifficultyBackend
 {
-    [PluginConfig("吾觉太易-后端", "Magian", "v0.0.6")]
+    [PluginConfig("吾觉太易-后端", "Magian", "v0.0.9")]
     public class IncreaseDifficulty : TaiwuRemakeHarmonyPlugin
     {
         public const string Version = "";
@@ -20,40 +20,50 @@ namespace IncreaseDifficultyBackend
         /// <summary>
         /// 降低历练的倍数
         /// </summary>
-        public static int ExpDivisor { get; private set; }
+        public static int ExpDivisor { get; private set; } = 10;
+
+        /// <summary>
+        /// 骗偷抢显示数
+        /// </summary>
+        public static int CheatStealRobNum { get; private set; } = 3;
 
         /// <summary>
         /// 更换武器
         /// </summary>
-        public static bool ChangeWeapony { get; private set; }
+        public static bool ChangeWeapony { get; private set; } = true;
 
         /// <summary>
         /// 一起放护体
         /// </summary>
-        public static bool TogetherDefendSkill { get; private set; }
+        public static bool TogetherDefendSkill { get; private set; } = true;
 
         /// <summary>
         /// 移动修练提醒
         /// </summary>
         public static bool MoveNotification { get; private set; }
 
+
         public override void OnModSettingUpdate()
         {
-            int val = 10;
+            int valI = ExpDivisor;
+            DomainManager.Mod.GetSetting(base.ModIdStr, "ExpDivisor", ref valI);
+            ExpDivisor = Math.Clamp(valI, 2, 10);
 
-            DomainManager.Mod.GetSetting(base.ModIdStr, "ExpDivisor", ref val);
-            ExpDivisor = Math.Clamp(val, 2, 10);
+            valI = CheatStealRobNum;
+            DomainManager.Mod.GetSetting(base.ModIdStr, "CheatStealRobNum", ref valI);
+            CheatStealRobNum = Math.Clamp(valI, 3, 10);
 
-            bool bval = true;
+            bool valB = ChangeWeapony;
+            DomainManager.Mod.GetSetting(base.ModIdStr, "ChangeWeapony", ref valB);
+            ChangeWeapony = valB;
 
-            DomainManager.Mod.GetSetting(base.ModIdStr, "ChangeWeapony", ref bval);
-            ChangeWeapony = bval;
+            valB = TogetherDefendSkill;
+            DomainManager.Mod.GetSetting(base.ModIdStr, "TogetherDefendSkill", ref valB);
+            TogetherDefendSkill = valB;
 
-            DomainManager.Mod.GetSetting(base.ModIdStr, "TogetherDefendSkill", ref bval);
-            TogetherDefendSkill = bval;
-
-            DomainManager.Mod.GetSetting(base.ModIdStr, "MoveNotification", ref bval);
-            MoveNotification = bval;
+            valB = MoveNotification;
+            DomainManager.Mod.GetSetting(base.ModIdStr, "MoveNotification", ref valB);
+            MoveNotification = valB;
         }
 
         public static class EventGuid

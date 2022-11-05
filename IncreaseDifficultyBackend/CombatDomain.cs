@@ -14,12 +14,10 @@ namespace IncreaseDifficultyBackend
     public class CombatDomainPatch
     {
         /// <summary>
-        /// 更改距离时,立马判断是否需要更换武器
+        /// 设置移动状态,添加立马判断是否需要更换武器
         /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="character"></param>
+        /// <param name="state"></param>
         /// <param name="index"></param>
-        /// <param name="context"></param>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.SetMoveState))]
         public static bool SetMoveStatePrefix(CombatDomain __instance, byte state, bool isAlly)
@@ -96,15 +94,13 @@ namespace IncreaseDifficultyBackend
         }
 
         /// <summary>
-        /// 阻止乱换武器
+        /// 更换武器,阻止当前能打到目标的更换武器
         /// </summary>
-        /// <param name="__instance"></param>
         /// <param name="character"></param>
         /// <param name="weaponIndex"></param>
         /// <param name="context"></param>
         /// <param name="init"></param>
         /// <param name="force"></param>
-        /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.ChangeWeapon), new Type[] { typeof(CombatCharacter), typeof(int), typeof(DataContext), typeof(bool), typeof(bool) })]
         public static bool ChangeWeaponPrefix(CombatDomain __instance, ref CombatCharacter character, int weaponIndex, DataContext context, bool init, bool force)
@@ -152,6 +148,11 @@ namespace IncreaseDifficultyBackend
             }
         }
 
+        /// <summary>
+        /// 释放轻功或护体,修改为太吾放护体,敌人就尝试也放护体
+        /// </summary>
+        /// <param name="character"></param>
+        /// <param name="skillConfig"></param>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.ApplyAgileOrDefenseSkill))]
         public static void ApplyAgileOrDefenseSkillPostfix(CombatDomain __instance, CombatCharacter character, Config.CombatSkillItem skillConfig)
@@ -188,7 +189,8 @@ namespace IncreaseDifficultyBackend
                     continue;
                 }
 
-                if (__instance.GetElement_EnemySkillDataDict(new CombatSkillKey(enemyChar.GetId(), config.TemplateId)).GetCanUse())
+                CombatSkillData combatSkillData;
+                if (__instance.TryGetElement_EnemySkillDataDict(new CombatSkillKey(enemyChar.GetId(), config.TemplateId), out combatSkillData) && combatSkillData.GetCanUse())
                 {
                     canUseSkills.Add(config.TemplateId);
                 }
@@ -199,8 +201,13 @@ namespace IncreaseDifficultyBackend
                 return;
             }
 
+            var aiInfo = __instance.GetAiInfo(enemyChar);
+            if (aiInfo != null)
+            {
+                aiInfo.IsDefenseRequiredPositively = false;
+            }
+
             Random random = new Random();
-            __instance.GetAiInfo(enemyChar).IsDefenseRequiredPositively = false;
             __instance.StartPrepareSkill(__instance.Context, canUseSkills.Count == 1 ? canUseSkills[0] : canUseSkills[random.Next(0, canUseSkills.Count - 1)], false);
 
         }
