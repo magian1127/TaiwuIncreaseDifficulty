@@ -38,9 +38,14 @@ namespace IncreaseDifficultyBackend
         public static bool TogetherDefendSkill { get; private set; } = true;
 
         /// <summary>
+        /// 禁用脚力
+        /// </summary>
+        public static bool DisableMobility { get; private set; } = false;
+
+        /// <summary>
         /// 移动修练提醒
         /// </summary>
-        public static bool MoveNotification { get; private set; }
+        public static bool MoveNotification { get; private set; } = false;
 
 
         public override void OnModSettingUpdate()
@@ -60,6 +65,10 @@ namespace IncreaseDifficultyBackend
             valB = TogetherDefendSkill;
             DomainManager.Mod.GetSetting(base.ModIdStr, "TogetherDefendSkill", ref valB);
             TogetherDefendSkill = valB;
+
+            valB = DisableMobility;
+            DomainManager.Mod.GetSetting(base.ModIdStr, "DisableMobility", ref valB);
+            DisableMobility = valB;
 
             valB = MoveNotification;
             DomainManager.Mod.GetSetting(base.ModIdStr, "MoveNotification", ref valB);
