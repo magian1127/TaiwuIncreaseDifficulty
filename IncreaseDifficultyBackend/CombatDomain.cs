@@ -21,24 +21,36 @@ namespace IncreaseDifficultyBackend
         /// <param name="index"></param>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), nameof(CombatDomain.SetMoveState))]
-        public static bool SetMoveStatePrefix(CombatDomain __instance, byte state, bool isAlly)
+        public static void SetMoveStatePrefix(CombatDomain __instance, byte state, bool isAlly)
         {
             if (!IncreaseDifficulty.ChangeWeapony)
             {
-                return true;
+                return;
+            }
+
+            if (isAlly)
+            {//太吾和同道不强制换武器
+                return;
             }
 
             CombatCharacter character = __instance.GetCombatCharacter(isAlly);
 
+            //bool isTaiwu = character.GetId() == DomainManager.Taiwu.GetTaiwuCharId();
+
+            //if (isTaiwu)
+            //{
+            //    return true;
+            //}
+
             if (__instance.InAttackRange(character))
             {
-                return true;
+                return;
             }
 
             int usingIndex = character.GetUsingWeaponIndex();
             if (usingIndex < 0)
             {
-                return true;
+                return;
             }
 
             short targetDistance = __instance.GetCurrentDistance();
@@ -49,7 +61,7 @@ namespace IncreaseDifficultyBackend
 
             if (weaponIndex < 0)
             {
-                return true;
+                return;
             }
 
             Weapon weapon = DomainManager.Item.GetElement_Weapons(weaponIndex);
@@ -85,13 +97,13 @@ namespace IncreaseDifficultyBackend
                         __instance.ChangeWeapon(character, i, dataContext, false, false);
                         //var uWeapon = __instance.GetWeaponData(false, weapons[usingIndex]);
                         //AdaptableLog.Info($"武器{weapon.GetName()} 索引{i} 距离{targetDistance} 武器{weapon.GetMinDistance()}-{weapon.GetMaxDistance()} CD{uWeapon.GetCdFrame()}-{uWeapon.GetExtraCdFrame()}");
-                        return true;
+                        return;
                     }
 
                 }
             }
 
-            return true;
+            return;
         }
 
         /// <summary>
