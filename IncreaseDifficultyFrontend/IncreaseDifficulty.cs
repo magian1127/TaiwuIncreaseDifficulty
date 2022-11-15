@@ -9,7 +9,7 @@ using TaiwuModdingLib.Core.Plugin;
 
 namespace IncreaseDifficultyFrontend
 {
-    [PluginConfig("吾觉太易-前端", "Magian", "0.0.1")]
+    [PluginConfig("吾觉太易-前端", "Magian", "0.1.0")]
     public class IncreaseDifficulty : TaiwuRemakeHarmonyPlugin
     {
         public override void Initialize()
