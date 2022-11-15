@@ -12,7 +12,7 @@ using TaiwuModdingLib.Core.Plugin;
 
 namespace IncreaseDifficultyBackend
 {
-    [PluginConfig("吾觉太易-后端", "Magian", "v0.0.9")]
+    [PluginConfig("吾觉太易-后端", "Magian", "v0.1.0")]
     public class IncreaseDifficulty : TaiwuRemakeHarmonyPlugin
     {
         public const string Version = "";
