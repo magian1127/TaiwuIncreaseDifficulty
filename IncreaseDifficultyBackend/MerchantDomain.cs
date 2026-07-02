@@ -1,4 +1,6 @@
-﻿using GameData.Common;
+using System;
+using System.Collections.Generic;
+using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Item;
@@ -6,119 +8,64 @@ using GameData.Domains.Item.Display;
 using GameData.Domains.Merchant;
 using GameData.Utilities;
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IncreaseDifficultyBackend
 {
+    /// <summary>
+    /// 「更保密的不传之秘」交换书籍过滤 —— 与 NPC 交换物品时，把该 NPC 门派的保密功法书
+    /// 从交换候选列表移除，让玩家无法换到这些书。
+    ///
+    /// 【方案】patch MerchantDomain.GetTradeBookDisplayData 的 Postfix。
+    ///   这是「获取可交换书籍显示数据」的入口（和 NPC 交换书籍经过这里）。
+    ///   在它返回 List&lt;ItemDisplayData&gt; 后，遍历移除保密功法书。
+    ///
+    /// 【★ 与旧代码的区别】旧 MerchantDomainPatch 用 Prefix 自己重写整个方法，依赖
+    ///   GetTradeBookMerchantData（已失效）。新方案改用 Postfix，让原版正常生成候选列表，
+    ///   我们只在结果上过滤，更稳健、不依赖内部 API。
+    ///
+    /// 【保密判断】书的 CombatSkill.SectId == 持有 NPC 的门派 && IsNonPublic。
+    ///   门派 ID 从 npcId 查 Character.GetOrganizationInfo()（后端可直接 DomainManager 查）。
+    /// </summary>
     [HarmonyPatch]
     public class MerchantDomainPatch
     {
-        /// <summary>
-        /// 显示交换的书籍,修改为不能换的书不显示
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="npcId"></param>
-        /// <param name="isFavor"></param>
-        /// <returns></returns>
-        [HarmonyPrefix]
+        [HarmonyPostfix]
         [HarmonyPatch(typeof(MerchantDomain), nameof(MerchantDomain.GetTradeBookDisplayData))]
-        public static bool GetTradeBookDisplayDataPrefix(MerchantDomain __instance, ref List<ItemDisplayData> __result, DataContext context, int npcId, bool isFavor)
+        public static void GetTradeBookDisplayDataPostfix(ref List<ItemDisplayData> __result, DataContext context, int npcId, bool isFavor)
         {
-            MerchantData merchantData = __instance.GetTradeBookMerchantData(context, npcId);
-            Character character = DomainManager.Character.GetElement_Objects(npcId);
-            Inventory inventory = character.GetInventory();
-            List<ItemKey> itemKeys = new List<ItemKey>();
-
-            var orgTemplateId = character.GetOrganizationInfo().OrgTemplateId;
-            //AdaptableLog.Info($"门派ID {orgTemplateId}");
-            sbyte visibleLevel = 10;
-            if (0 < orgTemplateId && orgTemplateId < 16)
+            try
             {
-                var orgCombatSkillsDisplayData = DomainManager.Organization.GetOrganizationCombatSkillsDisplayData(orgTemplateId);
-                visibleLevel = (sbyte)Math.Max(orgCombatSkillsDisplayData.ApprovingRate / 100 - 2, 0);
-            }
-            var taiwu = DomainManager.Taiwu.GetTaiwu();
-            var consummateLevel = taiwu.GetConsummateLevel();
-            var learnedCombatSkills = DomainManager.Taiwu.GetTaiwu().GetLearnedCombatSkills();
+                if (__result == null || __result.Count == 0) return;
 
-            if (isFavor)
+                // 查持有者的门派 ID
+                Character character = DomainManager.Character.GetElement_Objects(npcId);
+                if (character == null) return;
+                sbyte orgTemplateId = character.GetOrganizationInfo().OrgTemplateId;
+                if (orgTemplateId <= 0) return;
+
+                // 移除该门派的保密功法书
+                int removed = __result.RemoveAll(item => IsNonPublicBookOfOrg(item.Key, orgTemplateId));
+                if (removed > 0)
+                    AdaptableLog.Info($"[IncreaseDifficulty] 交换书籍移除 {removed} 本保密功法书 (NPC={npcId} org={orgTemplateId} isFavor={isFavor})");
+            }
+            catch (Exception ex)
             {
-                itemKeys.AddRange(merchantData.GoodsList0.Items.Keys.ToList().FindAll(IsNonPublicBook(orgTemplateId, isFavor, consummateLevel, visibleLevel, learnedCombatSkills)));
-                itemKeys.AddRange(merchantData.GoodsList1.Items.Keys.ToList().FindAll(IsNonPublicBook(orgTemplateId, isFavor, consummateLevel, visibleLevel, learnedCombatSkills)));
+                AdaptableLog.Info($"[IncreaseDifficulty] GetTradeBookDisplayData postfix 异常: {ex.Message}");
             }
-            else
-            {
-                itemKeys.AddRange(merchantData.GoodsList2.Items.Keys.ToList().FindAll(IsNonPublicBook(orgTemplateId, isFavor, consummateLevel, visibleLevel, learnedCombatSkills)));
-            }
-
-            itemKeys.AddRange(inventory.Items.Keys.ToList().FindAll(IsNonPublicBook(orgTemplateId, isFavor, consummateLevel, visibleLevel, learnedCombatSkills)));
-
-            __result = DomainManager.Item.GetItemDisplayDataList(itemKeys, -1);
-            return false;
         }
 
-        private static Predicate<ItemKey> IsNonPublicBook(sbyte orgTemplateId, bool isFavor, sbyte consummateLevel, sbyte visibleLevel, List<short> learnedCombatSkills)
+        /// <summary>判断一本书是否是指定门派的保密功法书。</summary>
+        private static bool IsNonPublicBookOfOrg(ItemKey key, sbyte orgTemplateId)
         {
-            return delegate (ItemKey item)
-            {
-                if (isFavor)
-                {
-                    if (item.ItemType == 10)
-                    {//是书
-                        if (orgTemplateId == 16)
-                        {//是太吾村
-                            return true;
-                        }
-                        var skillBook = Config.SkillBook.Instance[item.TemplateId];
-                        //AdaptableLog.Info($"{skillBook.Name} {consummateLevel} - {(skillBook.Grade - 1) * 2}");
-                        if (consummateLevel < (skillBook.Grade - 1) * 2)
-                        {//精纯不够
-                            return false;
-                        }
+            if (key.ItemType != 10) return false;  // 只看书籍
 
-                        if (skillBook.CombatSkillTemplateId >= 0)
-                        {//是技能书
-                            var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
-                            if (combatSkill.SectId == orgTemplateId && !combatSkill.IsNonPublic)
-                            {//技能门派等于当前人物门派,并且技能不是不传之秘
-                                return true;
-                            }
-                        }
-                        else
-                        {//是生活书
-                            return true;
-                        }
-                    }
-                }
-                else
-                {
-                    if (ItemTemplateHelper.GetItemSubType(item.ItemType, item.TemplateId) == 1001)
-                    {//1001 可能是门派发的功法书
-                        var skillBook = Config.SkillBook.Instance[item.TemplateId];
-                        var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
+            var skillBook = Config.SkillBook.Instance[key.TemplateId];
+            if (skillBook == null || skillBook.CombatSkillTemplateId < 0) return false;  // 非功法书
 
-                        if (combatSkill.SectId == orgTemplateId)
-                        {//技能门派等于当前人物门派
-                            if (learnedCombatSkills.Contains(combatSkill.TemplateId))
-                            {//太吾已经学会的
-                                return true;
-                            }
-                            if (combatSkill.SectId == orgTemplateId && !combatSkill.IsNonPublic && visibleLevel >= combatSkill.Grade && consummateLevel >= (skillBook.Grade - 1) * 2)
-                            {//技能不是不传之秘,支持度足够,精纯足够
-                             //AdaptableLog.Info($"{skillBook.Name} {visibleLevel} == {combatSkill.Grade}");
-                                return true;
-                            }
-                        }
-                    }
-                }
+            var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
+            if (combatSkill == null) return false;
 
-                return false;
-            };
+            return combatSkill.SectId == orgTemplateId && combatSkill.IsNonPublic;
         }
-
     }
 }

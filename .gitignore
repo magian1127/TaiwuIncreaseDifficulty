@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# 本 MOD 构建产物目录（前后端 OutputPath 都指向 ..\Plugins\），不入库
+Plugins/

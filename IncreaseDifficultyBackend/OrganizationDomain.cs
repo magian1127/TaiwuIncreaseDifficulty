@@ -52,8 +52,9 @@ namespace IncreaseDifficultyBackend
 
             if (removeBooks.Count > 0)
             {//离开门派时,没收所有保密书籍
-                //AdaptableLog.Info($"被没收了{removeBooks.Count}本书籍");
-                character.RemoveInventoryItemList(context, removeBooks, true, false);
+                // ★ API 变更：旧 RemoveInventoryItemList(context, list, bool, bool)
+                //   → 新 RemoveInventoryItem(context, List<ItemKey>, bool)（3 参数重载）
+                character.RemoveInventoryItem(context, removeBooks, true);
             }
         }
     }

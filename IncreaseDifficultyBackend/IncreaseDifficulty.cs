@@ -12,10 +12,10 @@ using TaiwuModdingLib.Core.Plugin;
 
 namespace IncreaseDifficultyBackend
 {
-    [PluginConfig("吾觉太易-后端", "Magian", "v0.1.0")]
-    public class IncreaseDifficulty : TaiwuRemakeHarmonyPlugin
+    [PluginConfig("IncreaseDifficultyBackend", "Magian", "0.2.0")]
+    public class IncreaseDifficulty : TaiwuRemakePlugin
     {
-        public const string Version = "";
+        public const string Version = "0.2.0";
 
         /// <summary>
         /// 降低历练的倍数
@@ -23,9 +23,13 @@ namespace IncreaseDifficultyBackend
         public static int ExpDivisor { get; private set; } = 10;
 
         /// <summary>
-        /// 骗偷抢显示数
+        /// 哄骗/偷窃/抢夺时，物品选择列表默认可见的物品数量基础值。
+        /// 最终可见数量 = BaseVisibleCount + 太吾聪颖 / ClevernessPerExtra。
         /// </summary>
-        public static int CheatStealRobNum { get; private set; } = 3;
+        public const int BaseVisibleCount = 0;
+
+        /// <summary>每多少点聪颖可多看到 1 个物品。</summary>
+        public const int ClevernessPerExtra = 10;
 
         /// <summary>
         /// 更换武器
@@ -47,32 +51,68 @@ namespace IncreaseDifficultyBackend
         /// </summary>
         public static bool MoveNotification { get; private set; } = false;
 
+        /// <summary>日志标签</summary>
+        public const string LogTag = "IncreaseDifficulty";
+
+        /// <summary>Harmony 实例，用于选择性挂载 patch（不挂的就保留代码但不生效）</summary>
+        private Harmony? _harmony;
+
+        public override void Initialize()
+        {
+            AdaptableLog.Info($"[{LogTag}] ★后端 Initialize 开始执行★ ModIdStr={ModIdStr}");
+            _harmony = new Harmony(ModIdStr);
+
+            // ★ 显式挂载要启用的 patch 类。
+            //   其余功能（战斗调整/送礼/读书/移动/突破）的 patch 类保留代码但不挂载 = 禁用。
+            //   需要时把对应类加进来即可。
+            //
+            // 「更保密的不传之秘」相关：
+            //   - OrganizationDomainPatch：离开门派没收保密书
+            //   - MerchantDomainPatch：交换书籍时把保密功法书从候选移除
+            //   - EventHelperPatch：哄骗/偷窃/抢夺等敌对交互过滤保密功法书
+            try
+            {
+                _harmony.PatchAll(typeof(OrganizationDomainPatch));
+                _harmony.PatchAll(typeof(MerchantDomainPatch));
+                _harmony.PatchAll(typeof(EventHelperPatch));
+                AdaptableLog.Info($"[{LogTag}] 后端 patch 已挂载 (含 EventHelper)");
+            }
+            catch (Exception ex)
+            {
+                AdaptableLog.Info($"[{LogTag}] 后端 PatchAll 异常: {ex.Message}");
+            }
+
+            try
+            {
+                RefreshSettings();
+            }
+            catch (Exception ex)
+            {
+                AdaptableLog.Info($"[{LogTag}] 后端 RefreshSettings 异常: {ex.Message}");
+            }
+
+            AdaptableLog.Info($"[{LogTag}] 后端 Initialize 完成");
+        }
 
         public override void OnModSettingUpdate()
         {
-            int valI = ExpDivisor;
-            DomainManager.Mod.GetSetting(base.ModIdStr, "ExpDivisor", ref valI);
-            ExpDivisor = Math.Clamp(valI, 2, 10);
+            RefreshSettings();
+        }
 
-            valI = CheatStealRobNum;
-            DomainManager.Mod.GetSetting(base.ModIdStr, "CheatStealRobNum", ref valI);
-            CheatStealRobNum = Math.Clamp(valI, 3, 10);
+        /// <summary>调试模式开关（唯一保留的设置项，控制日志输出）</summary>
+        public static bool DebugMode { get; private set; } = false;
 
-            bool valB = ChangeWeapony;
-            DomainManager.Mod.GetSetting(base.ModIdStr, "ChangeWeapony", ref valB);
-            ChangeWeapony = valB;
+        /// <summary>从游戏设置读取调试模式开关。其余功能全部强制开启，不读设置。</summary>
+        private void RefreshSettings()
+        {
+            bool valB = DebugMode;
+            DomainManager.Mod.GetSetting(ModIdStr, "DebugMode", ref valB);
+            DebugMode = valB;
+        }
 
-            valB = TogetherDefendSkill;
-            DomainManager.Mod.GetSetting(base.ModIdStr, "TogetherDefendSkill", ref valB);
-            TogetherDefendSkill = valB;
-
-            valB = DisableMobility;
-            DomainManager.Mod.GetSetting(base.ModIdStr, "DisableMobility", ref valB);
-            DisableMobility = valB;
-
-            valB = MoveNotification;
-            DomainManager.Mod.GetSetting(base.ModIdStr, "MoveNotification", ref valB);
-            MoveNotification = valB;
+        public override void Dispose()
+        {
+            _harmony?.UnpatchSelf();
         }
 
         public static class EventGuid

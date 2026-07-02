@@ -1,78 +1,78 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4CE0B7AD-6C70-4981-8ADF-B37C67FA163B}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>IncreaseDifficultyFrontend</RootNamespace>
     <AssemblyName>IncreaseDifficultyFrontend</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <LangVersion>latest</LangVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
+    <Nullable>enable</Nullable>
+    <LangVersion>10</LangVersion>
+    <OutputPath>..\Plugins\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup>
+    <GameDir>D:\Games\Steam\steamapps\common\The Scroll Of Taiwu</GameDir>
+    <ManagedDir>$(GameDir)\The Scroll of Taiwu_Data\Managed</ManagedDir>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
+  <!-- 共享：游戏路径、Mod 名、构建后自动部署到游戏目录。详见 ..\IncreaseDifficulty.props -->
+  <Import Project="..\IncreaseDifficulty.props" />
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
-    <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\0Harmony.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
+    <!--
+      以下前端 patch 文件依赖的 CharacterDataMonitor / ItemView / 旧签名在 1.0.20.x 已失效，暂排除编译。
+      代码保留备查，需要时重写：
+        - UI_CharacterMenuCombatSkill.cs（NPC 功法列表保密功法显示「未知功法」，原本就注释禁用）
+        - CombatSkillScrollView.cs（功法列表渲染回调，CharacterDataMonitor 失效）
+      ★ UI_CharacterMenuItems.cs 已重写适配 1.0.20.x（CommonTableRowForItem + _currentCharacterDisplayData），参与编译。
+    -->
+    <Compile Remove="UI_CharacterMenuCombatSkill.cs" />
+    <Compile Remove="CombatSkillScrollView.cs" />
+    <!-- 老式 AssemblyInfo 与 SDK 自动生成的冲突，排除 -->
+    <Compile Remove="Properties\AssemblyInfo.cs" />
+    <Compile Remove="UI_CharacterMenuItems.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="*.csproj" />
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GameData.Shared">
+      <HintPath>$(ManagedDir)\GameData.Shared.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GameData.Utilities">
+      <HintPath>$(ManagedDir)\GameData.Utilities.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GameData.Serializer">
+      <HintPath>$(ManagedDir)\GameData.Serializer.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="TaiwuModdingLib">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\TaiwuModdingLib.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(ManagedDir)\TaiwuModdingLib.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="Unity.TextMeshPro">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    <Reference Include="0Harmony">
+      <HintPath>$(ManagedDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(ManagedDir)\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(ManagedDir)\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="IncreaseDifficulty.cs" />
-    <Compile Include="UI_CharacterMenuItems.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CombatSkillScrollView.cs" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,0 +1,45 @@
+<Project>
+  <!--
+    本仓库（IncreaseDifficulty 吾觉太易）共享的太吾 MOD 构建属性与自动部署目标。
+
+    被前端 (IncreaseDifficultyFrontend.csproj) 和后端 (IncreaseDifficultyBackend.csproj)
+    各自 import 一次。构建成功后，把 Config.lua + 当前项目编译产物（dll）
+    复制到游戏目录 <GameDir>\Mod\<TaiwuModName>\，无需手动拷贝。
+    ★ 不复制 Settings.Lua（玩家设置文件），避免覆盖玩家在游戏里改的设置。
+
+    复制别的 Mod 时：改 <TaiwuModName> 即可；如换机器或游戏装在别处，改 <GameDir>。
+  -->
+  <PropertyGroup>
+    <!-- 太吾绘卷游戏安装根目录 -->
+    <GameDir>D:\Games\Steam\steamapps\common\The Scroll Of Taiwu</GameDir>
+    <!-- 游戏内 Mod 目录名（与源码目录名、Config.lua 的 Title 解耦） -->
+    <TaiwuModName>IncreaseDifficulty</TaiwuModName>
+    <!-- 部署目标目录 = 游戏根\Mod\<TaiwuModName> -->
+    <TaiwuModDeployDir>$(GameDir)\Mod\$(TaiwuModName)</TaiwuModDeployDir>
+    <!-- 设为 false 可临时关闭自动部署（如只编译不发布到游戏目录） -->
+    <TaiwuModDeployEnabled Condition="'$(TaiwuModDeployEnabled)' == ''">true</TaiwuModDeployEnabled>
+  </PropertyGroup>
+
+  <!--
+    构建后自动部署。AfterTargets=Build 保证只在编译成功时执行。
+    Config.lua / 编译产物每次覆盖（幂等，保证游戏目录与源同步）。
+    ★ Settings.Lua 不复制——它是玩家在游戏里改的设置，源码保持空 return {}。
+  -->
+  <Target Name="TaiwuDeployToGame" AfterTargets="Build" Condition="'$(TaiwuModDeployEnabled)' == 'true'">
+    <!-- 1) 创建目标目录（含 Plugins 子目录） -->
+    <MakeDir Directories="$(TaiwuModDeployDir)" />
+    <MakeDir Directories="$(TaiwuModDeployDir)\Plugins" />
+
+    <!-- 2) 复制 Mod 元信息（Config.lua / Cover.jpg 位于 Mod 根，相对项目目录是 ..\） -->
+    <Copy SourceFiles="..\Config.lua" DestinationFolder="$(TaiwuModDeployDir)" Condition="Exists('..\Config.lua')" />
+    <Copy SourceFiles="..\Cover.jpg" DestinationFolder="$(TaiwuModDeployDir)" Condition="Exists('..\Cover.jpg')" />
+
+    <!-- 3) 复制本项目的编译产物（dll）到 Plugins\。不复制 pdb/deps.json 保持目录干净 -->
+    <ItemGroup>
+      <_TaiwuDeployArtifacts Include="$(OutputPath)*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_TaiwuDeployArtifacts)" DestinationFolder="$(TaiwuModDeployDir)\Plugins" />
+
+    <Message Text="[$(MSBuildProjectName)] 已部署到 $(TaiwuModDeployDir)" Importance="high" />
+  </Target>
+</Project>
