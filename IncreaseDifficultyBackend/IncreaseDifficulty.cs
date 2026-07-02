@@ -69,13 +69,15 @@ namespace IncreaseDifficultyBackend
             // 「更保密的不传之秘」相关：
             //   - OrganizationDomainPatch：离开门派没收保密书
             //   - MerchantDomainPatch：交换书籍时把保密功法书从候选移除
-            //   - EventHelperPatch：哄骗/偷窃/抢夺等敌对交互过滤保密功法书
+            //   - TaiwuDomainPatch：与 NPC 交换物品时过滤保密功法书（GetExchangeDisplayData）
+            //   - EventHelperPatch：哄骗/偷窃/抢夺等敌对交互过滤保密功法书 + 按聪颖限制可见物品
             try
             {
                 _harmony.PatchAll(typeof(OrganizationDomainPatch));
                 _harmony.PatchAll(typeof(MerchantDomainPatch));
+                _harmony.PatchAll(typeof(TaiwuDomainPatch));
                 _harmony.PatchAll(typeof(EventHelperPatch));
-                AdaptableLog.Info($"[{LogTag}] 后端 patch 已挂载 (含 EventHelper)");
+                AdaptableLog.Info($"[{LogTag}] 后端 patch 已挂载 (含 EventHelper/TaiwuDomain)");
             }
             catch (Exception ex)
             {

@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using GameData.Common;
 using GameData.Domains;
+using GameData.Domains.Character;
 using GameData.Domains.Item;
+using GameData.Domains.Item.Display;
 using GameData.Domains.Taiwu;
+using GameData.Domains.Taiwu.Display;
 using GameData.Utilities;
 using HarmonyLib;
 
@@ -11,6 +15,14 @@ namespace IncreaseDifficultyBackend
     [HarmonyPatch]
     public class TaiwuDomainPatch
     {
+        /*
+         * 【以下为旧功能代码，因游戏版本(1.0.44.0) API 变化而失效，注释保留备查】
+         *   - 读书历练相关（SetLifeSkillPageComplete / SetCombatSkillPageComplete /
+         *     UpdateLifeSkillBookReadingProgress / UpdateCombatSkillBookReadingProgress）
+         *   - 突破固定种子（SelectSkillBreakGrid / InitSkillBreakPlate）
+         * 失效点示例：TaiwuDomain.GetElement_SkillBreakPlateDict、SkillBreakPlate.CostedStepCount
+         * 已不存在；GetTaiwuLifeSkill 签名变化。需要时按新 API 升级后取消注释。
+         *
         /// <summary>
         /// 设置技艺书每页进度,修改每读完一页获取的历练
         /// </summary>
@@ -179,6 +191,58 @@ namespace IncreaseDifficultyBackend
                 return;
             }
             context.Random.Reinitialise(seed);
+        }
+        */ // —— 旧功能失效代码结束 ——
+
+
+        /// <summary>
+        /// 「更保密的不传之秘」交换物品过滤 —— 与 NPC 交换物品（ViewExchange）时，
+        /// 把对方门派的保密功法书从交换候选列表移除，让玩家无法看到/换到这些书。
+        ///
+        /// 【为什么放这里】ViewExchange 走的是 TaiwuDomain.GetExchangeDisplayData（EExchangeType.Person 分支），
+        ///   其 TargetItemDisplayDataList = Character.GetAllItems(targetId, ...)，不经过 EventHelper，
+        ///   也不经过 MerchantDomain.GetTradeBookDisplayData（那个只管 ViewExchangeBook 书籍交换）。
+        ///   所以必须在 GetExchangeDisplayData 的 Postfix 里单独过滤。
+        ///
+        /// 【保密判断】书的 CombatSkill.SectId == 目标 NPC 的门派 && IsNonPublic。
+        /// </summary>
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TaiwuDomain), nameof(TaiwuDomain.GetExchangeDisplayData))]
+        public static void GetExchangeDisplayDataPostfix(ref ExchangeDisplayData __result, DataContext context, int targetId)
+        {
+            try
+            {
+                if (__result?.TargetItemDisplayDataList == null || __result.TargetItemDisplayDataList.Count == 0) return;
+
+                // 查目标 NPC 的门派 ID
+                Character character = DomainManager.Character.GetElement_Objects(targetId);
+                if (character == null) return;
+                sbyte orgTemplateId = character.GetOrganizationInfo().OrgTemplateId;
+                if (orgTemplateId <= 0) return;
+
+                // 移除该门派的保密功法书
+                int removed = __result.TargetItemDisplayDataList.RemoveAll(item => IsNonPublicBookOfOrg(item.Key, orgTemplateId));
+                if (removed > 0)
+                    AdaptableLog.Info($"[IncreaseDifficulty] 交换物品移除 {removed} 本保密功法书 (NPC={targetId} org={orgTemplateId})");
+            }
+            catch (Exception ex)
+            {
+                AdaptableLog.Info($"[IncreaseDifficulty] GetExchangeDisplayData postfix 异常: {ex.Message}");
+            }
+        }
+
+        /// <summary>判断一本书是否是指定门派的保密功法书。</summary>
+        private static bool IsNonPublicBookOfOrg(ItemKey key, sbyte orgTemplateId)
+        {
+            if (key.ItemType != 10) return false;  // 只看书籍
+
+            var skillBook = Config.SkillBook.Instance[key.TemplateId];
+            if (skillBook == null || skillBook.CombatSkillTemplateId < 0) return false;  // 非功法书
+
+            var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
+            if (combatSkill == null) return false;
+
+            return combatSkill.SectId == orgTemplateId && combatSkill.IsNonPublic;
         }
 
 

@@ -20,20 +20,12 @@
   <ItemGroup>
     <!--
       以下功能文件因当前游戏版本(1.0.20.x) API 变化而失效，暂从编译排除。
-      代码保留备查，需要时逐个升级：
-        - CharacterDomain.cs（送礼亲密度，且引用已删除的 FavorabilityDivisor）
-        - CombatDomain.cs / CombatSkill.cs（战斗调整）
-        - MapDomain.cs（移动加历练）
-        - TaiwuDomain.cs（降低读书历练 + 突破固定种子）
-        - EventHelper.cs（骗偷抢显示数量，功能5，待升级）
+      代码保留备查
     -->
     <Compile Remove="CharacterDomain.cs" />
     <Compile Remove="CombatDomain.cs" />
     <Compile Remove="CombatSkill.cs" />
     <Compile Remove="MapDomain.cs" />
-    <Compile Remove="TaiwuDomain.cs" />
-    <!-- EventHelper.cs 已启用：SelectCharacterItemRequest Postfix → 过滤保密功法书 -->
-    <!-- MerchantDomain.cs 已重写适配 1.0.32（Postfix 过滤交换书籍里的保密功法书），参与编译 -->
   </ItemGroup>
 
   <ItemGroup>
