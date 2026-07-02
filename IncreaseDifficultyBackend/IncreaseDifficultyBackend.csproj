@@ -22,7 +22,6 @@
       以下功能文件因当前游戏版本(1.0.20.x) API 变化而失效，暂从编译排除。
       代码保留备查
     -->
-    <Compile Remove="CharacterDomain.cs" />
     <Compile Remove="CombatDomain.cs" />
     <Compile Remove="CombatSkill.cs" />
     <Compile Remove="MapDomain.cs" />

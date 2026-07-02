@@ -4,6 +4,7 @@ using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Combat;
 using GameData.Domains.Item;
+using GameData.Domains.Mod;
 using GameData.Domains.Taiwu;
 using GameData.Utilities;
 using HarmonyLib;
@@ -71,13 +72,18 @@ namespace IncreaseDifficultyBackend
             //   - MerchantDomainPatch：交换书籍时把保密功法书从候选移除
             //   - TaiwuDomainPatch：与 NPC 交换物品时过滤保密功法书（GetExchangeDisplayData）
             //   - EventHelperPatch：哄骗/偷窃/抢夺等敌对交互过滤保密功法书 + 按聪颖限制可见物品
+            // 「运功按门派限制装备功法」相关：
+            //   - CombatSkillDomainPatch：过滤运功界面候选功法列表（GetEquipCombatSkillDisplayData）
+            //   - CharacterDomainPatch：拦截装备动作，防自动运功绕过
             try
             {
                 _harmony.PatchAll(typeof(OrganizationDomainPatch));
                 _harmony.PatchAll(typeof(MerchantDomainPatch));
                 _harmony.PatchAll(typeof(TaiwuDomainPatch));
                 _harmony.PatchAll(typeof(EventHelperPatch));
-                AdaptableLog.Info($"[{LogTag}] 后端 patch 已挂载 (含 EventHelper/TaiwuDomain)");
+                _harmony.PatchAll(typeof(CombatSkillDomainPatch));
+                _harmony.PatchAll(typeof(CharacterDomainPatch));
+                AdaptableLog.Info($"[{LogTag}] 后端 patch 已挂载");
             }
             catch (Exception ex)
             {
@@ -93,7 +99,46 @@ namespace IncreaseDifficultyBackend
                 AdaptableLog.Info($"[{LogTag}] 后端 RefreshSettings 异常: {ex.Message}");
             }
 
+            // 注册供前端调用的 Mod 方法
+            try
+            {
+                DomainManager.Mod.AddModMethod(
+                    ModIdStr,
+                    "GetTaiwuConsummateLevel",
+                    new Func<DataContext, SerializableModData, SerializableModData>(HandleGetTaiwuConsummateLevel)
+                );
+                AdaptableLog.Info($"[{LogTag}] 已注册 Mod 方法 GetTaiwuConsummateLevel");
+            }
+            catch (Exception ex)
+            {
+                AdaptableLog.Info($"[{LogTag}] 注册 Mod 方法异常: {ex.Message}");
+            }
+
             AdaptableLog.Info($"[{LogTag}] 后端 Initialize 完成");
+        }
+
+        /// <summary>
+        /// 处理「获取太吾精纯值」的 Mod 方法调用。
+        /// 返回：consummate(int，0~9)、maxSects(int，1+精纯，允许的门派功法种类上限)。
+        /// </summary>
+        private static SerializableModData HandleGetTaiwuConsummateLevel(DataContext context, SerializableModData param)
+        {
+            var result = new SerializableModData();
+            try
+            {
+                int taiwuId = DomainManager.Taiwu.GetTaiwuCharId();
+                var taiwu = DomainManager.Character.GetElement_Objects(taiwuId);
+                int consummate = taiwu != null ? taiwu.GetConsummateLevel() : 0;
+                result.Set("consummate", consummate);
+                result.Set("maxSects", 1 + consummate);
+            }
+            catch (Exception ex)
+            {
+                AdaptableLog.Info($"[{LogTag}] HandleGetTaiwuConsummateLevel 异常: {ex.Message}");
+                result.Set("consummate", 0);
+                result.Set("maxSects", 1);
+            }
+            return result;
         }
 
         public override void OnModSettingUpdate()
