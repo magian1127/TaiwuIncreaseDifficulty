@@ -8,14 +8,14 @@ using HarmonyLib;
 namespace IncreaseDifficultyBackend
 {
     /// <summary>
-    /// 运功界面按门派限制装备功法 —— 装备动作拦截。
+    /// 运功界面按门派限制装备功法 —— 手动单装拦截。
     ///
-    /// 【为什么需要拦截】运功界面的候选列表已在 CombatSkillDomainPatch 过滤，但「自动运功」
-    ///   （AutoEquipCombatSkills）会绕过候选列表直接装备。这里在装备动作入口做安全网拦截，
-    ///   确保无论如何装备都不会超出允许的门派种类数。
+    /// 【职责】只拦截 <see cref="CharacterDomain.AddEquippedCombatSkill"/>（玩家手动装备单个功法），
+    ///   按 CombatSkillDomainPatch 的门派规则判断是否允许装备。
     ///
-    /// 【规则】同 CombatSkillDomainPatch：允许门派数 = 1 + 太吾精纯；
-    ///   无门派功法(SectId&lt;=0)不受限；已装备门派未达上限时可引入新门派，达上限后只能装已有门派的。
+    /// 【自动运功】不在此处理。「自动运功」AI 会一次性装多个门派功法，无法逐个拦截，
+    ///   改由 <see cref="EquippingPatch"/> 在 Equipping.EquipCombatSkills 跑完后按数量规则
+    ///   移除超出门派额度的功法。
     ///
     /// 【只拦截太吾】charId == 太吾才执行。NPC 装备不受限。
     /// </summary>
@@ -52,37 +52,9 @@ namespace IncreaseDifficultyBackend
         }
 
         /// <summary>
-        /// 自动运功 —— 若当前已达门派上限，直接跳过（避免自动装备引入新门派功法）。
-        ///   AutoEquipCombatSkills 内部会按 AI 配置挑功法装，无法逐个拦截，故达上限时整体跳过。
-        ///   未达上限时放行（让它自由装，装完仍在上限内）。
+        /// 自动运功的门派限制由 <see cref="EquippingPatch"/> 处理（在 Equipping.EquipCombatSkills
+        /// 跑完后按数量规则移除超出门派额度的功法），这里不再拦截 AutoEquipCombatSkills。
         /// </summary>
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(CharacterDomain), nameof(CharacterDomain.AutoEquipCombatSkills))]
-        public static bool AutoEquipCombatSkillsPrefix(DataContext context, int charId, short combatConfigsTemplateId)
-        {
-            int taiwuId = DomainManager.Taiwu.GetTaiwuCharId();
-            if (charId != taiwuId) return true;  // 非太吾，放行
-
-            // 取已装备门派集合与上限，判断是否还有余量
-            var character = DomainManager.Character.GetElement_Objects(taiwuId);
-            if (character == null) return true;
-
-            var equipped = CombatSkillDomainPatch.CollectEquippedTemplateIds(character.GetCombatSkillEquipment());
-            var allowedSects = new System.Collections.Generic.HashSet<sbyte>();
-            foreach (short tmplId in equipped)
-            {
-                sbyte s = CombatSkillDomainPatch.GetSectId(tmplId);
-                if (s > 0) allowedSects.Add(s);
-            }
-            int maxSects = 1 + character.GetConsummateLevel();
-
-            if (allowedSects.Count >= maxSects)
-            {
-                AdaptableLog.Info($"[IncreaseDifficulty] 自动运功拦截：已装备门派 {allowedSects.Count} >= 上限 {maxSects}，跳过自动运功（避免引入新门派）");
-                return false;  // 达上限，跳过自动运功
-            }
-            return true;  // 未达上限，放行
-        }
 
         /// <summary>通用装备检查：太吾则按门派规则判断，允许返回 true，拦截返回 false。</summary>
         private static bool CheckCanEquip(int charId, short skillTemplateId, string methodName)

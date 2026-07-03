@@ -74,7 +74,8 @@ namespace IncreaseDifficultyBackend
             //   - EventHelperPatch：哄骗/偷窃/抢夺等敌对交互过滤保密功法书 + 按聪颖限制可见物品
             // 「运功按门派限制装备功法」相关：
             //   - CombatSkillDomainPatch：过滤运功界面候选功法列表（GetEquipCombatSkillDisplayData）
-            //   - CharacterDomainPatch：拦截装备动作，防自动运功绕过
+            //   - CharacterDomainPatch：拦截手动单装（AddEquippedCombatSkill）
+            //   - EquipCombatSkillsPatch + SelectCombatSkillsPatch：自动运功在选池前过滤可用功法池
             try
             {
                 _harmony.PatchAll(typeof(OrganizationDomainPatch));
@@ -83,6 +84,8 @@ namespace IncreaseDifficultyBackend
                 _harmony.PatchAll(typeof(EventHelperPatch));
                 _harmony.PatchAll(typeof(CombatSkillDomainPatch));
                 _harmony.PatchAll(typeof(CharacterDomainPatch));
+                _harmony.PatchAll(typeof(EquipCombatSkillsPatch));
+                _harmony.PatchAll(typeof(SelectCombatSkillsPatch));
                 AdaptableLog.Info($"[{LogTag}] 后端 patch 已挂载");
             }
             catch (Exception ex)
