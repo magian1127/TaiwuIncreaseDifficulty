@@ -44,7 +44,7 @@ namespace IncreaseDifficultyBackend
                 if (orgTemplateId <= 0) return;
 
                 // 移除该门派的保密功法书
-                int removed = __result.RemoveAll(item => IsNonPublicBookOfOrg(item.Key, orgTemplateId));
+                int removed = __result.RemoveAll(item => ModUtils.IsNonPublicBookOfOrg(item.Key, orgTemplateId));
                 if (removed > 0)
                     AdaptableLog.Info($"[IncreaseDifficulty] 交换书籍移除 {removed} 本保密功法书 (NPC={npcId} org={orgTemplateId} isFavor={isFavor})");
             }
@@ -52,20 +52,6 @@ namespace IncreaseDifficultyBackend
             {
                 AdaptableLog.Info($"[IncreaseDifficulty] GetTradeBookDisplayData postfix 异常: {ex.Message}");
             }
-        }
-
-        /// <summary>判断一本书是否是指定门派的保密功法书。</summary>
-        private static bool IsNonPublicBookOfOrg(ItemKey key, sbyte orgTemplateId)
-        {
-            if (key.ItemType != 10) return false;  // 只看书籍
-
-            var skillBook = Config.SkillBook.Instance[key.TemplateId];
-            if (skillBook == null || skillBook.CombatSkillTemplateId < 0) return false;  // 非功法书
-
-            var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
-            if (combatSkill == null) return false;
-
-            return combatSkill.SectId == orgTemplateId && combatSkill.IsNonPublic;
         }
     }
 }

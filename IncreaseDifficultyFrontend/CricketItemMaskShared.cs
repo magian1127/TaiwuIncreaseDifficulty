@@ -92,25 +92,6 @@ namespace IncreaseDifficultyFrontend
             catch { return 0; }
         }
 
-        /// <summary>
-        /// 判断 ItemKey 是否是对 orgId 门派的不传之秘（保密功法书）。
-        /// 逻辑同 ViewCharacterMenuItemsPatch.IsNonPublicBookOfOrg：ItemType==10（书籍），
-        /// 查 SkillBook→CombatSkill，SectId==orgId 且 IsNonPublic。
-        /// </summary>
-        internal static bool IsNonPublicBook(ItemKey key, sbyte orgId)
-        {
-            if (orgId <= 0) return false;
-            if (key.ItemType != 10) return false;
-
-            var skillBook = Config.SkillBook.Instance[key.TemplateId];
-            if (skillBook == null || skillBook.CombatSkillTemplateId < 0) return false;
-
-            var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
-            if (combatSkill == null) return false;
-
-            return combatSkill.SectId == orgId && combatSkill.IsNonPublic;
-        }
-
         #endregion
     }
 }

@@ -48,7 +48,7 @@ namespace IncreaseDifficultyFrontend
                 var r = rewards[i];
                 if (r == null) continue;
                 var w = r.Wager;
-                if (w.Type == 1 && CricketItemMaskShared.IsNonPublicBook(w.ItemKey, targetOrgId))
+                if (w.Type == 1 && ModUtils.IsNonPublicBookOfOrg(w.ItemKey, targetOrgId))
                 {
                     rewards.RemoveAt(i);
                     AdaptableLog.Info($"[{IncreaseDifficulty.LogTag}] 促织押注：过滤不传之秘 reward（索引 {i}）");

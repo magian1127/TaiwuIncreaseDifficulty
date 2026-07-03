@@ -50,7 +50,7 @@ namespace IncreaseDifficultyFrontend
             if (isTaiwu) return;
 
             sbyte orgTemplateId = GetNpcOrgId(__instance);
-            if (!IsNonPublicBookOfOrg(itemData, orgTemplateId)) return;
+            if (!ModUtils.IsNonPublicBookOfOrg(itemData, orgTemplateId)) return;
 
             var rowItemMain = rowItemLine.RowItemMain;
             if (rowItemMain == null) return;
@@ -86,7 +86,7 @@ namespace IncreaseDifficultyFrontend
             if (isTaiwu) return true;
 
             sbyte orgTemplateId = GetNpcOrgId(__instance);
-            if (IsNonPublicBookOfOrg(content, orgTemplateId))
+            if (ModUtils.IsNonPublicBookOfOrg(content, orgTemplateId))
             {
                 AdaptableLog.Info($"[IncreaseDifficulty] 拦截点击保密功法书 tmpl={content.Key.TemplateId}");
                 return false;  // 跳过原方法，点了没反应
@@ -102,19 +102,5 @@ namespace IncreaseDifficultyFrontend
             return displayData != null ? displayData.OrgInfo.OrgTemplateId : (sbyte)0;
         }
 
-        /// <summary>判断物品是否是当前 NPC 门派的保密功法书。</summary>
-        private static bool IsNonPublicBookOfOrg(ITradeableContent item, sbyte orgTemplateId)
-        {
-            if (orgTemplateId <= 0) return false;
-            if (item.Key.ItemType != 10) return false;
-
-            var skillBook = Config.SkillBook.Instance[item.Key.TemplateId];
-            if (skillBook == null || skillBook.CombatSkillTemplateId < 0) return false;
-
-            var combatSkill = Config.CombatSkill.Instance[skillBook.CombatSkillTemplateId];
-            if (combatSkill == null) return false;
-
-            return combatSkill.SectId == orgTemplateId && combatSkill.IsNonPublic;
-        }
     }
 }
