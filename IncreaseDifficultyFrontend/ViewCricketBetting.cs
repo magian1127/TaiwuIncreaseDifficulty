@@ -7,18 +7,20 @@ using HarmonyLib;
 namespace IncreaseDifficultyFrontend
 {
     /// <summary>
-    /// 促织押注界面 —— Patch A：数据层合并 Type==1 reward。
+    /// 促织押注界面 —— Patch A：遮蔽 Type==1（物品类）reward 的显示。
     ///
-    /// RefreshRewardList 的 Prefix：进入前合并 BetRewards 里所有 Type==1（物品）为 1 个随机项。
+    /// RefreshRewardList 的 Prefix：记录 BetRewards 中所有 Type==1 的索引到
+    /// <see cref="CricketItemMaskShared.HiddenItemIndices"/>，不修改列表本身。
     ///
-    /// 【合并规则】
-    ///   - 收集所有 Wager.Type==1 的 reward
-    ///   - 若 ≥ 2 个：随机选 1 个保留，其余从列表删除（倒序删除避免索引错位）
-    ///   - 若 0 或 1 个：不动
-    ///   - 记录保留的那个在新列表里的索引到 <see cref="CricketItemMaskShared.HiddenItemIndices"/>
-    ///   - 同时过滤掉对方门派的不传之秘（保密功法书）
+    /// 【为什么不改列表？】
+    ///   后端 <c>TaiwuEventDomain.SetCricketBettingResult</c> 结算奖励时使用自己维护的
+    ///   <c>BetRewards</c> 副本，前端修改列表会导致索引错位：
+    ///   玩家在修改后的列表选了索引 N，后端用 N 查它未改的列表，拿到错误的奖励。
     ///
-    /// 【索引安全】删除多余 Type==1 后，Type 0/2/3 的相对顺序不变，_selectedReward 仍有效。
+    /// 【遮蔽逻辑】
+    ///   所有 Type==1 索引加入 HiddenItemIndices → <see cref="CricketBettingRewardItemViewPatch"/>
+    ///   将其显示改为"物品"（隐藏名称/图标/品级），玩家无法区分具体物品。
+    ///   列表不动则前后端索引始终一致，选中/结算正确。
     /// </summary>
     [HarmonyPatch]
     public class ViewCricketBettingPatch
@@ -39,53 +41,20 @@ namespace IncreaseDifficultyFrontend
             var rewards = rewardsField.GetValue(bettingData) as IList<CricketWagerData>;
             if (rewards == null || rewards.Count == 0) return;
 
-            // 拿对方角色门派 ID（用于过滤不传之秘）
-            sbyte targetOrgId = CricketItemMaskShared.GetTargetOrgId(bettingData);
-
-            // 先过滤掉 Type==1 里的不传之秘（对方门派的保密功法书）——直接从列表删除
-            for (int i = rewards.Count - 1; i >= 0; i--)
+            // 收集所有 Type==1（物品类）的索引，加入遮蔽集合
+            // 不修改列表本身，确保前后端索引始终同步
+            for (int i = 0; i < rewards.Count; i++)
             {
-                var r = rewards[i];
-                if (r == null) continue;
-                var w = r.Wager;
-                if (w.Type == 1 && ModUtils.IsNonPublicBookOfOrg(w.ItemKey, targetOrgId))
+                if (rewards[i]?.Wager.Type == 1)
                 {
-                    rewards.RemoveAt(i);
-                    AdaptableLog.Info($"[{IncreaseDifficulty.LogTag}] 促织押注：过滤不传之秘 reward（索引 {i}）");
+                    CricketItemMaskShared.HiddenItemIndices.Add(i);
                 }
             }
 
-            // 收集过滤后所有 Type==1 的索引
-            var itemIndices = new List<int>();
-            for (int i = 0; i < rewards.Count; i++)
+            if (CricketItemMaskShared.HiddenItemIndices.Count > 0)
             {
-                if (rewards[i]?.Wager.Type == 1) itemIndices.Add(i);
+                AdaptableLog.Info($"[{IncreaseDifficulty.LogTag}] 促织押注：遮蔽 {CricketItemMaskShared.HiddenItemIndices.Count} 个物品 reward（索引：{string.Join(",", CricketItemMaskShared.HiddenItemIndices)}）");
             }
-
-            if (itemIndices.Count < 2)
-            {
-                // 0 或 1 个物品：单个也要遮蔽显示
-                if (itemIndices.Count == 1) CricketItemMaskShared.HiddenItemIndices.Add(itemIndices[0]);
-                return;
-            }
-
-            // 随机选 1 个保留，其余删除（倒序删除）
-            int keepOriginalIndex = itemIndices[UnityEngine.Random.Range(0, itemIndices.Count)];
-            for (int k = itemIndices.Count - 1; k >= 0; k--)
-            {
-                int idx = itemIndices[k];
-                if (idx != keepOriginalIndex) rewards.RemoveAt(idx);
-            }
-
-            // 保留的那个在新列表里的索引
-            int newIdx = -1;
-            for (int i = 0; i < rewards.Count; i++)
-            {
-                if (rewards[i]?.Wager.Type == 1) { newIdx = i; break; }
-            }
-            if (newIdx >= 0) CricketItemMaskShared.HiddenItemIndices.Add(newIdx);
-
-            AdaptableLog.Info($"[{IncreaseDifficulty.LogTag}] 促织押注：合并 {itemIndices.Count} 个物品 reward 为 1 个（新索引 {newIdx}）");
         }
     }
 }

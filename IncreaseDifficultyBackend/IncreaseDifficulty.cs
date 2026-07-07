@@ -86,6 +86,7 @@ namespace IncreaseDifficultyBackend
                 _harmony.PatchAll(typeof(CharacterDomainPatch));
                 _harmony.PatchAll(typeof(EquipCombatSkillsPatch));
                 _harmony.PatchAll(typeof(SelectCombatSkillsPatch));
+                _harmony.PatchAll(typeof(ItemDomainPatch));
                 AdaptableLog.Info($"[{LogTag}] 后端 patch 已挂载");
             }
             catch (Exception ex)
