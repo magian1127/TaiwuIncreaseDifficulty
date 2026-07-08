@@ -47,6 +47,23 @@ namespace IncreaseDifficultyFrontend
         /// </summary>
         internal static readonly HashSet<int> HiddenItemIndices = new();
 
+        /// <summary>
+        /// 促织物品遮蔽总开关。为 true 时跳过全部三个遮蔽 patch（下注界面 + 战斗界面）。
+        /// 由 MonthInteraction MOD 通过 ModDisplayEvent 控制：
+        /// MonthInteraction 触发促织事件时发 "CricketMaskOff" → 置 true（屏蔽本次遮蔽，让注入物品显示真名）；
+        /// 促织结算后发 "CricketMaskOn" → 置 false（恢复正常遮蔽）。
+        /// 默认 false（正常遮蔽）。MonthInteraction 不存在时本开关恒为 false，不影响 IncreaseDifficulty 独立运行。
+        /// </summary>
+        internal static bool MaskDisabled;
+
+        /// <summary>MonthInteraction 后端的 modId（约定常量），监听它的 ModDisplayEvent。</summary>
+        private const string MonthInteractionModId = "MonthInteraction.Backend";
+        private const string NotifyMaskOff = "CricketMaskOff";
+        private const string NotifyMaskOn = "CricketMaskOn";
+
+        /// <summary>ModDisplayEvent 处理委托（注册/取消注册用同一个实例）。</summary>
+        private static System.Action<string>? _modDisplayEventHandler;
+
         /// <summary>初始化反射缓存，在插件加载时调用。</summary>
         internal static void Init()
         {
@@ -67,6 +84,33 @@ namespace IncreaseDifficultyFrontend
                 $"rewardCardItem={FiRewardCardItem != null}, gradeBackImage={FiGradeBackImage != null}, " +
                 $"refreshCrickets={MiRefreshCrickets != null}) | 战斗(infoNameText={FiInfoNameText != null}, " +
                 $"cardItem={FiCardItem != null}, wagerItemRoot={FiWagerItemRoot != null})");
+
+            // 注册 ModDisplayEvent 监听：MonthInteraction 触发促织时通知本 MOD 屏蔽/恢复物品遮蔽
+            _modDisplayEventHandler = (string data) =>
+            {
+                if (data == NotifyMaskOff)
+                {
+                    MaskDisabled = true;
+                    AdaptableLog.Info($"[{IncreaseDifficulty.LogTag}] 收到 {NotifyMaskOff}，促织物品遮蔽已屏蔽");
+                }
+                else if (data == NotifyMaskOn)
+                {
+                    MaskDisabled = false;
+                    AdaptableLog.Info($"[{IncreaseDifficulty.LogTag}] 收到 {NotifyMaskOn}，促织物品遮蔽已恢复");
+                }
+            };
+            ModManager.RegisterModDisplayEventHandler(MonthInteractionModId, _modDisplayEventHandler);
+            AdaptableLog.Info($"[{IncreaseDifficulty.LogTag}] 已注册监听 {MonthInteractionModId} 的 ModDisplayEvent");
+        }
+
+        /// <summary>卸载时取消 ModDisplayEvent 监听（由 IncreaseDifficulty.Dispose 调用）。</summary>
+        internal static void UnregisterModDisplayEvent()
+        {
+            if (_modDisplayEventHandler != null)
+            {
+                ModManager.UnRegisterModDisplayEventHandler(MonthInteractionModId, _modDisplayEventHandler);
+                _modDisplayEventHandler = null;
+            }
         }
 
         #endregion

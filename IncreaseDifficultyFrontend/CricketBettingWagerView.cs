@@ -23,6 +23,9 @@ namespace IncreaseDifficultyFrontend
         [HarmonyPatch(typeof(CricketBettingWagerView), "Render")]
         internal static void RenderPostfix(CricketBettingWagerView __instance, Wager wager)
         {
+            // MonthInteraction 触发的促织事件：跳过遮蔽，物品显示真名
+            if (CricketItemMaskShared.MaskDisabled) return;
+
             // 仅处理物品类押注（Type==1）
             if (wager.Type != 1) return;
 

@@ -27,6 +27,7 @@ namespace IncreaseDifficultyFrontend
 
         public override void Dispose()
         {
+            CricketItemMaskShared.UnregisterModDisplayEvent();
             _harmony?.UnpatchSelf();
         }
     }

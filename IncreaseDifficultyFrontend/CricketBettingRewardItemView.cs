@@ -26,6 +26,9 @@ namespace IncreaseDifficultyFrontend
         [HarmonyPatch(typeof(CricketBettingRewardItemView), "SetData")]
         internal static bool SetDataPrefix(CricketBettingRewardItemView __instance, int index, CricketWagerData reward)
         {
+            // MonthInteraction 触发的促织事件：跳过遮蔽，执行原方法显示真名
+            if (CricketItemMaskShared.MaskDisabled) return true;
+
             if (!CricketItemMaskShared.HiddenItemIndices.Contains(index)) return true; // 非遮蔽目标，执行原方法
 
             if (CricketItemMaskShared.FiRewardName == null

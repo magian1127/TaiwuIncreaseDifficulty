@@ -31,6 +31,9 @@ namespace IncreaseDifficultyFrontend
         {
             CricketItemMaskShared.HiddenItemIndices.Clear();
 
+            // MonthInteraction 触发的促织事件：跳过遮蔽，物品显示真名
+            if (CricketItemMaskShared.MaskDisabled) return;
+
             if (CricketItemMaskShared.FiBettingData == null) return;
             var bettingData = CricketItemMaskShared.FiBettingData.GetValue(__instance);
             if (bettingData == null) return;
