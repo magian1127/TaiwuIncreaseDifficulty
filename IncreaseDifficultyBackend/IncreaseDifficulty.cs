@@ -72,6 +72,7 @@ namespace IncreaseDifficultyBackend
             //   - MerchantDomainPatch：交换书籍时把保密功法书从候选移除
             //   - TaiwuDomainPatch：与 NPC 交换物品时过滤保密功法书（GetExchangeDisplayData）
             //   - EventHelperPatch：哄骗/偷窃/抢夺等敌对交互过滤保密功法书 + 按聪颖限制可见物品
+            //   - CharacterPatch：死亡遗赠过滤保密功法书（GenerateBequestBooks，覆盖太吾+所有NPC受益人）
             // 「运功按门派限制装备功法」相关：
             //   - CombatSkillDomainPatch：过滤运功界面候选功法列表（GetEquipCombatSkillDisplayData）
             //   - CharacterDomainPatch：拦截手动单装（AddEquippedCombatSkill）
@@ -87,6 +88,7 @@ namespace IncreaseDifficultyBackend
                 _harmony.PatchAll(typeof(EquipCombatSkillsPatch));
                 _harmony.PatchAll(typeof(SelectCombatSkillsPatch));
                 _harmony.PatchAll(typeof(ItemDomainPatch));
+                _harmony.PatchAll(typeof(CharacterPatch));
                 AdaptableLog.Info($"[{LogTag}] 后端 patch 已挂载");
             }
             catch (Exception ex)
